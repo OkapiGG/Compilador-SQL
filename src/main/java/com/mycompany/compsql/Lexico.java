@@ -13,18 +13,24 @@ import java.util.Map;
  */
 public class Lexico {
     
-    private final Map<String, TipoToken> Tokenizar;
+    private final Map<String, TipoToken> mapaToken;
     
     public Lexico(){
-        this.Tokenizar = new HashMap<>();
+        this.mapaToken = new HashMap<>();
+        mapeoToken();
     }
 
     public void mapeoToken(){
-        Tokenizar.put("insertar", TipoToken.Insertar);
-        Tokenizar.put("en", TipoToken.En);
-        Tokenizar.put("tabla", TipoToken.Tabla);
-        Tokenizar.put("usuarios", TipoToken.Identificador);
-        Tokenizar.put("valores", TipoToken.Valores);
-    }
-    
+        mapaToken.put("insertar", TipoToken.Insertar);
+        mapaToken.put("en", TipoToken.En);
+        mapaToken.put("tabla", TipoToken.Tabla);
+        mapaToken.put("valores", TipoToken.Valores);
+        mapaToken.put("(", TipoToken.ParentesisAbre);
+        mapaToken.put(",", TipoToken.Coma);
+        //mapaToken.put(" ", TipoToken.Texto);
+        mapaToken.put("crear", TipoToken.Crear);
+        mapaToken.put("entero", TipoToken.NumeroDecimal);
+        mapaToken.put("llave primaria", TipoToken.Primaria);
+        mapaToken.put(";", TipoToken.PuntoComa);
+    }    
 }
