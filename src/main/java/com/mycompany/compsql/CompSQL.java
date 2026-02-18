@@ -10,6 +10,8 @@ package com.mycompany.compsql;
  */
 public class CompSQL {
     public static void main(String[] args) {
-        System.out.println("Hello World!");
+        Lexico lexico = new Lexico();
+
+        lexico.analizar("Insertar en tabla usuarios valores ( 1 , “ Emanuel ”,  “ Perez ” ,  ” 9621657244 ” )");
     }
 }

@@ -45,15 +45,16 @@ public class Lexico {
             
             if(Character.isLetter(actual)){
                 String lexema = "";
-                
-                while(Character.isLetter(actual) && Character.isDigit(actual)){
-                    lexema += actual;
+
+                while(i < codigo.length() && Character.isLetter(codigo.charAt(i))){
+                    lexema += codigo.charAt(i);
                     i++;
                 }
+
+                if(mapaToken.containsKey(lexema.toLowerCase())){
+                    System.out.println("Token: " + mapaToken.get(lexema.toLowerCase()) + " (" + lexema + ")");
+                }
             }
-            
-            
-            
         }
     }
 }
