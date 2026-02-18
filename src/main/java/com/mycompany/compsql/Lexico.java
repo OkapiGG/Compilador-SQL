@@ -13,6 +13,8 @@ import java.util.Map;
  */
 public class Lexico {
     
+    int i=0;
+    
     private final Map<String, TipoToken> mapaToken;
     
     public Lexico(){
@@ -27,10 +29,31 @@ public class Lexico {
         mapaToken.put("valores", TipoToken.Valores);
         mapaToken.put("(", TipoToken.ParentesisAbre);
         mapaToken.put(",", TipoToken.Coma);
-        //mapaToken.put(" ", TipoToken.Texto);
         mapaToken.put("crear", TipoToken.Crear);
         mapaToken.put("entero", TipoToken.NumeroDecimal);
         mapaToken.put("llave primaria", TipoToken.Primaria);
         mapaToken.put(";", TipoToken.PuntoComa);
     }    
+    
+    public void analizar(String codigo){
+        for(i=0; i < codigo.length(); i++){
+            char actual = codigo.charAt(i);
+            
+            if(Character.isWhitespace(actual)){
+                continue;
+            }
+            
+            if(Character.isLetter(actual)){
+                String lexema = "";
+                
+                while(Character.isLetter(actual) && Character.isDigit(actual)){
+                    lexema += actual;
+                    i++;
+                }
+            }
+            
+            
+            
+        }
+    }
 }
