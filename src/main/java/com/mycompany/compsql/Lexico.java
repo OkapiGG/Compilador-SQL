@@ -12,17 +12,17 @@ import java.util.Map;
  * @author alancervantes
  */
 public class Lexico {
-
-    int i = 0;
-
+    
+    int i=0;
+    
     private final Map<String, TipoToken> mapaToken;
-
-    public Lexico() {
+    
+    public Lexico(){
         this.mapaToken = new HashMap<>();
         mapeoToken();
     }
 
-    public void mapeoToken() {
+    public void mapeoToken(){
         mapaToken.put("insertar", TipoToken.Insertar);
         mapaToken.put("en", TipoToken.En);
         mapaToken.put("tabla", TipoToken.Tabla);
@@ -33,33 +33,29 @@ public class Lexico {
         mapaToken.put("entero", TipoToken.NumeroDecimal);
         mapaToken.put("llave primaria", TipoToken.Primaria);
         mapaToken.put(";", TipoToken.PuntoComa);
-    }
-
-    public void analizar(String codigo) {
-        for (i = 0; i < codigo.length(); i++) {
+    }    
+    
+    public void analizar(String codigo){
+        for(i=0; i < codigo.length(); i++){
             char actual = codigo.charAt(i);
-
-            if (Character.isWhitespace(actual)) {
+            
+            if(Character.isWhitespace(actual)){
                 continue;
             }
+            
+            if(Character.isLetter(actual)){
+                String lexema = "";
 
-            if (Character.isLetter(actual)) {
-                String lexema = obtenerIdentificador(codigo);
-                if (mapaToken.containsKey(lexema.toLowerCase())) {
+                while(i < codigo.length() && Character.isLetter(codigo.charAt(i))){
+                    lexema += codigo.charAt(i);
+                    i++;
+                }
+                i--;
+
+                if(mapaToken.containsKey(lexema.toLowerCase())){
                     System.out.println("Token: " + mapaToken.get(lexema.toLowerCase()) + " (" + lexema + ")");
                 }
             }
         }
-    }
-
-    public String obtenerIdentificador(String codigo) {
-        String resultado = "";
-
-        while (i < codigo.length() && (Character.isLetter(codigo.charAt(i)) || Character.isDigit(codigo.charAt(i)))) {
-            resultado += codigo.charAt(i);
-            i++;
-        }
-        i--;
-        return resultado; // por el momento
     }
 }
