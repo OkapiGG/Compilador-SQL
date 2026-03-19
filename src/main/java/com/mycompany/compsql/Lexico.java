@@ -4,7 +4,9 @@
  */
 package com.mycompany.compsql;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -38,7 +40,9 @@ public class Lexico {
         mapaToken.put(";", TipoToken.PuntoComa);
     }
 
-    public void analizar(String codigo) {
+    public List<Token> analizar(String codigo) {
+        List<Token>listaTokens = new ArrayList<>();
+        
         for (i = 0; i < codigo.length(); i++) {
             char actual = codigo.charAt(i);
 
@@ -69,12 +73,12 @@ public class Lexico {
             String simbolo = String.valueOf(actual);
             if(mapaToken.containsKey(simbolo)){
                 System.out.println("Token: " + mapaToken.get(simbolo) + " (" + simbolo + ")");
+//                listaTokens.add();
             } else{
                 System.out.println("Simbolo no reconocido: " + actual);
-            }
-                
-            
+            }  
         }
+        return listaTokens;
     }
 
     public String obtenerIdentificador(String codigo) {
@@ -134,8 +138,8 @@ public class Lexico {
             lexema.append(c);
             i++;
         }
-        
+     
         System.out.println("Token: " + TipoToken.Cadena + " (" + lexema.toString() + ")");
     }
-    
+     
 }
