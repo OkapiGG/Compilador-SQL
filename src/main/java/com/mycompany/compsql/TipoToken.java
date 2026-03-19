@@ -10,9 +10,9 @@ package com.mycompany.compsql;
  */
 public enum TipoToken {
     Seleccionar, De,Donde, Y, O,Ordernar, Por, Asc, Desc, Limite, Grupo, Tener, Distinto, Como, Insertar, En, Valores,
-    Defecto, Nulo, Unico, Crear, Tabla, Columna, Tipo, Entero, Texto, Decimal, Fecha, Booleano, Clave, Primaria, Foranea, Referencia, 
+    Defecto, Nulo, Unico, Crear, Tabla, Columna, Tipo, Entero, Texto, Decimal, Fecha, Booleano, Clave, LlavePrimaria, LlaveForanea, Referencia, 
     AutoIncremento, NoNulo, Actualizar, Establecer, Incrementar, Decrementar, Eliminar, Truncar, Borrar, Modificar, Agregar, Renombrar,
     Entre, EnLista, Existe, ComoTexto, Longitud, Mayusculas, Minusculas, Contar, Sumar, Promedio, Maximo, Minimo, IniciarTransaccion, Confirmar, Cancelar,
-    Alias, Verdadero, Falso, Unir, UnirInterno, UnirIzquierdo, UnirDerecho, Identificador, NumeroEntero, NumeroDecimal, Igual, Diferente, MayorQue, MenoQue, MayorIgualQue, MenorIgualQue, AND, OR, Asignacion,
-    ParentesisAbre, ParentesisCierra, Coma, PuntoComa
+    Alias, Verdadero, Falso, Unir, UnirInterno, UnirIzquierdo, UnirDerecho, Identificador, NumeroEntero, NumeroDecimal, Igual, Diferente, MayorQue, MenoQue, 
+    MayorIgualQue, MenorIgualQue, AND, OR, Asignacion, ParentesisAbre, ParentesisCierra, Coma, PuntoComa, Cadena
 }
