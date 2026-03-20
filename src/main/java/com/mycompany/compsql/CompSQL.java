@@ -14,7 +14,7 @@ public class CompSQL {
     public static void main(String[] args) {
         Lexico lexico = new Lexico();
 
-        List<Token> tokensGenerados = lexico.analizar("Insertar en tabla alumno valores ( 1, ” Alan ”,  “ Cervantes ” ,  ” 9621657244 ” );");
+        List<Token> tokensGenerados = lexico.analizar("Truncar tabla historial;");
     
         System.out.println("Tokens Generados: " + tokensGenerados.size());
         

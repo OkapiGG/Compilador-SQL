@@ -67,7 +67,6 @@ public class Sintactico {
         System.out.println("Analisis sintactico correcto.");
     }
 
-
     private void analizarInsertar() {
         emparejar(TipoToken.Insertar);
         emparejar(TipoToken.En);
@@ -105,66 +104,191 @@ public class Sintactico {
     }
 
     private void analizarSeleccionar() {
-        throw new UnsupportedOperationException("Falta implementar: analizarSeleccionar");
+       emparejar(TipoToken.Seleccionar);
+        
+        // Manejo opcional de DISTINCT
+        if (tokenActual != null && tokenActual.getTipo() == TipoToken.Distinto) {
+            analizarDistinto();
+        }
+        
+        analizarListaItemsSelect();
+        emparejar(TipoToken.De);
+        emparejar(TipoToken.Identificador);
+        
+        // Opcional: WHERE 
+        if (tokenActual != null && tokenActual.getTipo() == TipoToken.Donde) {
+            analizarOpcWhere();
+        }
+        
+        
+        if (tokenActual != null && tokenActual.getTipo() == TipoToken.PuntoComa) {
+            emparejar(TipoToken.PuntoComa);
+        }
     }
 
     private void analizarActualizar() {
-        throw new UnsupportedOperationException("Falta implementar: analizarActualizar");
+        emparejar(TipoToken.Actualizar);
+        emparejar(TipoToken.Identificador);
+        emparejar(TipoToken.Establecer); 
+        
+        analizarListaAsignaciones(); 
+        
+        if (tokenActual != null && tokenActual.getTipo() == TipoToken.Donde) {
+            analizarOpcWhere();
+        }
+        emparejar(TipoToken.PuntoComa);
     }
 
     private void analizarEliminar() {
-        throw new UnsupportedOperationException("Falta implementar: analizarEliminar");
+        emparejar(TipoToken.Eliminar);
+        emparejar(TipoToken.De); 
+        emparejar(TipoToken.Identificador);
+        
+        if (tokenActual != null && tokenActual.getTipo() == TipoToken.Donde) {
+            analizarOpcWhere();
+        }
+        emparejar(TipoToken.PuntoComa);
     }
 
     private void analizarCrearTabla() {
-        throw new UnsupportedOperationException("Falta implementar: analizarCrearTabla");
+        emparejar(TipoToken.Crear);
+        emparejar(TipoToken.Tabla);
+        emparejar(TipoToken.Identificador);
+        emparejar(TipoToken.ParentesisAbre);
+        
+        analizarDefinicionesCol(); 
+        
+        emparejar(TipoToken.ParentesisCierra);
+        emparejar(TipoToken.PuntoComa);
     }
 
     private void analizarTruncar() {
-        throw new UnsupportedOperationException("Falta implementar: analizarTruncar");
+        emparejar(TipoToken.Truncar);
+        emparejar(TipoToken.Tabla);
+        emparejar(TipoToken.Identificador);
+        emparejar(TipoToken.PuntoComa);
     }
 
     private void analizarDistinto() {
-        throw new UnsupportedOperationException("Falta implementar: analizarDistinto");
+        emparejar(TipoToken.Distinto);
     }
 
     private void analizarColumnas() {
-        throw new UnsupportedOperationException("Falta implementar: analizarColumnas");
+        emparejar(TipoToken.Identificador);
+        while (tokenActual != null && tokenActual.getTipo() == TipoToken.Coma) {
+            emparejar(TipoToken.Coma);
+            emparejar(TipoToken.Identificador);
+        }
     }
 
     private void analizarListaItemsSelect() {
-        throw new UnsupportedOperationException("Falta implementar: analizarListaItemsSelect");
+        // En tu léxico no veo el token Asterisco (*), 
+        // así que por ahora manejamos solo lista de columnas.
+        analizarColumnas();
     }
 
     private void analizarItemSelect() {
+        analizarExpresionCol();
+        analizarAlias();
         throw new UnsupportedOperationException("Falta implementar: analizarItemSelect");
     }
 
     private void analizarExpresionCol() {
+        if (tokenActual == null) throw new RuntimeException("Fin inesperado en EXPRESION_COL");
+        
+        if (tokenActual.getTipo() == TipoToken.Identificador) {
+            emparejar(TipoToken.Identificador);
+        } else if (tokenActual.getTipo() == TipoToken.Contar ||
+                tokenActual.getTipo() == TipoToken.Suma||
+                tokenActual.getTipo() == TipoToken.Promedio ||
+                tokenActual.getTipo() == TipoToken.Maximo ||
+                tokenActual.getTipo() == TipoToken.Minimo) {
+            analizarAgregacion();
+            emparejar(TipoToken.ParentesisAbre);
+            emparejar(TipoToken.Identificador);
+            emparejar(TipoToken.ParentesisCierra);
+        } else {
+            throw new RuntimeException("EXPRESION_COL invalida: " + tokenActual.getLexema());
+        }
         throw new UnsupportedOperationException("Falta implementar: analizarExpresionCol");
     }
 
     private void analizarAgregacion() {
+        if (tokenActual == null) throw new RuntimeException("Fin inesperado en AGREGACION");
+        
+        switch (tokenActual.getTipo()) {
+            case Contar:
+            case Suma:
+            case Promedio:
+            case Maximo:
+            case Minimo:
+                emparejar(tokenActual.getTipo());
+                break;
+            default:
+                throw new RuntimeException("Agregacion inválida: " + tokenActual.getLexema());
+        }
         throw new UnsupportedOperationException("Falta implementar: analizarAgregacion");
     }
 
     private void analizarAlias() {
+        if (tokenActual != null && (tokenActual.getTipo() == TipoToken.Como || tokenActual.getTipo() == TipoToken.As)) {
+            emparejar(tokenActual.getTipo());
+            emparejar(TipoToken.Identificador);
+        }
         throw new UnsupportedOperationException("Falta implementar: analizarAlias");
     }
 
     private void analizarJoin() {
+        if (tokenActual == null) return;
+        if (tokenActual.getTipo() == TipoToken.UnirInterno ||
+                tokenActual.getTipo() == TipoToken.UnirIzquierdo ||
+                tokenActual.getTipo() == TipoToken.UnirDerecho ||
+                tokenActual.getTipo() == TipoToken.Unir) {
+            analizarTipoJoin();
+            emparejar(TipoToken.Unir);
+            emparejar(TipoToken.Identificador); 
+            emparejar(TipoToken.En);
+            analizarCondicion(); 
+        }
         throw new UnsupportedOperationException("Falta implementar: analizarJoin");
     }
 
     private void analizarTipoJoin() {
+        if (tokenActual == null) return;
+        
+        switch (tokenActual.getTipo()) {
+            case UnirInterno:
+            case UnirIzquierdo:
+            case UnirDerecho:
+                emparejar(tokenActual.getTipo());
+                break;
+            default:
+                break;
+        }
         throw new UnsupportedOperationException("Falta implementar: analizarTipoJoin");
     }
 
     private void analizarListaAsignaciones() {
+        analizarAsignacion();
+        while (tokenActual != null && tokenActual.getTipo() == TipoToken.Coma) {
+            emparejar(TipoToken.Coma);
+            analizarAsignacion();
+        }
         throw new UnsupportedOperationException("Falta implementar: analizarListaAsignaciones");
     }
 
     private void analizarAsignacion() {
+        emparejar(TipoToken.Identificador);
+        emparejar(TipoToken.Igual);
+        if (tokenActual.getTipo() == TipoToken.NumeroEntero ||
+                tokenActual.getTipo() == TipoToken.NumeroDecimal ||
+                tokenActual.getTipo() == TipoToken.Cadena ||
+                tokenActual.getTipo() == TipoToken.Booleano ||
+                tokenActual.getTipo() == TipoToken.Nulo) {
+            emparejar(tokenActual.getTipo());
+        } else {
+            throw new RuntimeException("Valor inválido en ASIGNACION: " + tokenActual.getLexema());
+        }
         throw new UnsupportedOperationException("Falta implementar: analizarAsignacion");
     }
 
@@ -206,35 +330,126 @@ public class Sintactico {
         throw new UnsupportedOperationException("Falta implementar: analizarOperadorLogico");
     }
 
+    //------
     private void analizarCondicion() {
+        emparejar(TipoToken.Identificador);
+        
+        if(tokenActual != null && tokenActual.getTipo() == TipoToken.Entre){
+            emparejar(TipoToken.Entre);
+            analizarValor();
+            emparejar(TipoToken.Y);
+            analizarValor();
+        } else{
+            analizarOpRel();
+            analizarValor();
+        }
+        
         throw new UnsupportedOperationException("Falta implementar: analizarCondicion");
     }
 
     private void analizarOpRel() {
+        
+        if(tokenActual == null){
+            throw new RuntimeException("Error: Se esperaba un operador relacional pero se encontro fin de codigo");
+        }
+        
+        if (tokenActual.getTipo() == TipoToken.Igual) {
+            emparejar(TipoToken.Igual);
+        } else if (tokenActual.getTipo() == TipoToken.Diferente) {
+            emparejar(TipoToken.Diferente);
+        } else if (tokenActual.getTipo() == TipoToken.MayorQue) {
+            emparejar(TipoToken.MayorQue);
+        } else if (tokenActual.getTipo() == TipoToken.MenoQue) {
+            emparejar(TipoToken.MenoQue);
+        } else if (tokenActual.getTipo() == TipoToken.MayorIgualQue) {
+            emparejar(TipoToken.MayorIgualQue);
+        } else if (tokenActual.getTipo() == TipoToken.MenorIgualQue) {
+            emparejar(TipoToken.MenorIgualQue);
+        } else {
+            throw new RuntimeException("Error Sintactico: Se esperaba un operador relacional (=, >, <, etc) pero se encontro " + tokenActual.getLexema());
+        }
+        
         throw new UnsupportedOperationException("Falta implementar: analizarOpRel");
     }
 
     private void analizarGroupBy() {
+        
+        if(tokenActual != null && tokenActual.getTipo() == TipoToken.Grupo){
+            emparejar(TipoToken.Grupo);
+            emparejar(TipoToken.Por);
+            
+            analizarListaId();
+            analizarHaving();
+        }
+        
         throw new UnsupportedOperationException("Falta implementar: analizarGroupBy");
     }
 
     private void analizarHaving() {
+        
+        if(tokenActual != null && tokenActual.getTipo() == TipoToken.Tener){
+            emparejar(TipoToken.Tener);
+            analizarExpresionLogica();
+        }
+        
         throw new UnsupportedOperationException("Falta implementar: analizarHaving");
     }
 
     private void analizarOrderBy() {
+        
+        if(tokenActual != null && tokenActual.getTipo() == TipoToken.Ordernar){
+            emparejar(TipoToken.Ordernar);
+            emparejar(TipoToken.Por);
+            
+            analizarListaOrden();
+            
+        }
         throw new UnsupportedOperationException("Falta implementar: analizarOrderBy");
     }
 
     private void analizarListaOrden() {
+        
+        emparejar(TipoToken.Identificador);
+        
+        analizarSentido();
+        
+        while(tokenActual != null && tokenActual.getTipo() == TipoToken.Coma){
+            emparejar(TipoToken.Coma);
+            emparejar(TipoToken.Identificador);
+            analizarSentido();
+        }
+        
         throw new UnsupportedOperationException("Falta implementar: analizarListaOrden");
     }
 
     private void analizarSentido() {
+        
+        if(tokenActual != null && tokenActual.getTipo() == TipoToken.Asc){
+            emparejar(TipoToken.Asc);
+        } else if(tokenActual != null && tokenActual.getTipo() == TipoToken.Desc){
+            emparejar(TipoToken.Desc);
+        }
+        
         throw new UnsupportedOperationException("Falta implementar: analizarSentido");
     }
 
     private void analizarLimit() {
+        
+        if (tokenActual != null && tokenActual.getTipo() == TipoToken.Limite) {
+            emparejar(TipoToken.Limite);
+            
+            emparejar(TipoToken.NumeroEntero);
+        }
         throw new UnsupportedOperationException("Falta implementar: analizarLimit");
+    }
+    
+    private void analizarListaId() {
+        
+        emparejar(TipoToken.Identificador);
+        
+        while (tokenActual != null && tokenActual.getTipo() == TipoToken.Coma) {
+            emparejar(TipoToken.Coma);
+            emparejar(TipoToken.Identificador);
+        }
     }
 }

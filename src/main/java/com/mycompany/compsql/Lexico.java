@@ -87,7 +87,7 @@ public class Lexico {
         mapaToken.put("mayusculas", TipoToken.Mayusculas);
         mapaToken.put("minusculas", TipoToken.Minusculas);
         mapaToken.put("contar", TipoToken.Contar);
-        mapaToken.put("suma", TipoToken.Sumar);
+        mapaToken.put("suma", TipoToken.Suma);
         mapaToken.put("promedio", TipoToken.Promedio);
         mapaToken.put("maximo", TipoToken.Maximo);
         mapaToken.put("minimo", TipoToken.Minimo);
