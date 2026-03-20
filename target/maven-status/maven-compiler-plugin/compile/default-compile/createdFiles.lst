@@ -1,5 +1,6 @@
 com/mycompany/compsql/CompSQL.class
 com/mycompany/compsql/Token.class
 com/mycompany/compsql/TipoToken.class
+com/mycompany/compsql/Sintactico$1.class
 com/mycompany/compsql/Lexico.class
 com/mycompany/compsql/Sintactico.class
