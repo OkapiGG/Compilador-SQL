@@ -104,35 +104,87 @@ public class Sintactico {
     }
 
     private void analizarSeleccionar() {
-        throw new UnsupportedOperationException("Falta implementar: analizarSeleccionar");
+       emparejar(TipoToken.Seleccionar);
+        
+        // Manejo opcional de DISTINCT
+        if (tokenActual != null && tokenActual.getTipo() == TipoToken.Distinto) {
+            analizarDistinto();
+        }
+        
+        analizarListaItemsSelect();
+        emparejar(TipoToken.De);
+        emparejar(TipoToken.Identificador);
+        
+        // Opcional: WHERE 
+        if (tokenActual != null && tokenActual.getTipo() == TipoToken.Donde) {
+            analizarOpcWhere();
+        }
+        
+        
+        if (tokenActual != null && tokenActual.getTipo() == TipoToken.PuntoComa) {
+            emparejar(TipoToken.PuntoComa);
+        }
     }
 
     private void analizarActualizar() {
-        throw new UnsupportedOperationException("Falta implementar: analizarActualizar");
+        emparejar(TipoToken.Actualizar);
+        emparejar(TipoToken.Identificador);
+        emparejar(TipoToken.Establecer); 
+        
+        analizarListaAsignaciones(); 
+        
+        if (tokenActual != null && tokenActual.getTipo() == TipoToken.Donde) {
+            analizarOpcWhere();
+        }
+        emparejar(TipoToken.PuntoComa);
     }
 
     private void analizarEliminar() {
-        throw new UnsupportedOperationException("Falta implementar: analizarEliminar");
+        emparejar(TipoToken.Eliminar);
+        emparejar(TipoToken.De); 
+        emparejar(TipoToken.Identificador);
+        
+        if (tokenActual != null && tokenActual.getTipo() == TipoToken.Donde) {
+            analizarOpcWhere();
+        }
+        emparejar(TipoToken.PuntoComa);
     }
 
     private void analizarCrearTabla() {
-        throw new UnsupportedOperationException("Falta implementar: analizarCrearTabla");
+        emparejar(TipoToken.Crear);
+        emparejar(TipoToken.Tabla);
+        emparejar(TipoToken.Identificador);
+        emparejar(TipoToken.ParentesisAbre);
+        
+        analizarDefinicionesCol(); 
+        
+        emparejar(TipoToken.ParentesisCierra);
+        emparejar(TipoToken.PuntoComa);
     }
 
     private void analizarTruncar() {
-        throw new UnsupportedOperationException("Falta implementar: analizarTruncar");
+        emparejar(TipoToken.Truncar);
+        emparejar(TipoToken.Tabla);
+        emparejar(TipoToken.Identificador);
+        emparejar(TipoToken.PuntoComa);
     }
 
     private void analizarDistinto() {
-        throw new UnsupportedOperationException("Falta implementar: analizarDistinto");
+        emparejar(TipoToken.Distinto);
     }
 
     private void analizarColumnas() {
-        throw new UnsupportedOperationException("Falta implementar: analizarColumnas");
+        emparejar(TipoToken.Identificador);
+        while (tokenActual != null && tokenActual.getTipo() == TipoToken.Coma) {
+            emparejar(TipoToken.Coma);
+            emparejar(TipoToken.Identificador);
+        }
     }
 
     private void analizarListaItemsSelect() {
-        throw new UnsupportedOperationException("Falta implementar: analizarListaItemsSelect");
+        // En tu léxico no veo el token Asterisco (*), 
+        // así que por ahora manejamos solo lista de columnas.
+        analizarColumnas();
     }
 
     private void analizarItemSelect() {
