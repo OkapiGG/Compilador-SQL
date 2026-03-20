@@ -14,5 +14,5 @@ public enum TipoToken {
     AutoIncremento, NoNulo, Actualizar, Establecer, Incrementar, Decrementar, Eliminar, Truncar, Borrar, Modificar, Agregar, Renombrar,
     Entre, EnLista, Existe, ComoTexto, Longitud, Mayusculas, Minusculas, Contar, Sumar, Promedio, Maximo, Minimo, IniciarTransaccion, Confirmar, Cancelar,
     Alias, Verdadero, Falso, Unir, UnirInterno, UnirIzquierdo, UnirDerecho, Identificador, NumeroEntero, NumeroDecimal, Igual, Diferente, MayorQue, MenoQue, 
-    MayorIgualQue, MenorIgualQue, AND, OR, Asignacion, ParentesisAbre, ParentesisCierra, Coma, PuntoComa, Cadena
+    MayorIgualQue, MenorIgualQue, AND, OR, Asignacion, ParentesisAbre, ParentesisCierra, Coma, PuntoComa, Cadena,Suma,As
 }
