@@ -14,7 +14,7 @@ public class Sintactico {
     private List<Token> tokens;
     private int posicionActual;
     private Token tokenActual;
-        
+
     public Sintactico(List<Token> tokens) {
         this.tokens = tokens;
         this.posicionActual = 0;
@@ -22,7 +22,7 @@ public class Sintactico {
             this.tokenActual = tokens.get(0);
         }
     }
-    
+
     private void avanzar() {
         posicionActual++;
         if (posicionActual < tokens.size()) {
@@ -40,7 +40,7 @@ public class Sintactico {
             throw new RuntimeException("Error Sintactico, se esperaba " + tipoEsperado + " pero se encontro '" + lexema + "'");
         }
     }
-    
+
     public void analizarPrograma() {
         if (tokenActual == null) {
             System.out.println("No hay tokens para analizar.");
@@ -49,14 +49,14 @@ public class Sintactico {
 
         while (tokenActual != null) {
             if (tokenActual.getTipo() == TipoToken.Insertar) {
-                analizarInsertar(); 
-            } else if (tokenActual.getTipo() == TipoToken.Crear) { 
+                analizarInsertar();
+            } else if (tokenActual.getTipo() == TipoToken.Crear) {
                 analizarCrearTabla();
             } else if (tokenActual.getTipo() == TipoToken.Seleccionar) {
                 analizarSeleccionar();
-            } else if (tokenActual.getTipo() == TipoToken.Actualizar) { 
+            } else if (tokenActual.getTipo() == TipoToken.Actualizar) {
                 analizarActualizar();
-            } else if (tokenActual.getTipo() == TipoToken.Eliminar) { 
+            } else if (tokenActual.getTipo() == TipoToken.Eliminar) {
                 analizarEliminar();
             } else if (tokenActual.getTipo() == TipoToken.Truncar) {
                 analizarTruncar();
@@ -66,8 +66,8 @@ public class Sintactico {
         }
         System.out.println("Analisis sintactico correcto.");
     }
-    
-    
+
+
     private void analizarInsertar() {
         emparejar(TipoToken.Insertar);
         emparejar(TipoToken.En);
@@ -75,13 +75,13 @@ public class Sintactico {
         emparejar(TipoToken.Identificador);
         emparejar(TipoToken.Valores);
         emparejar(TipoToken.ParentesisAbre);
-        
+
         analizarListaValores();
-        
+
         emparejar(TipoToken.ParentesisCierra);
         emparejar(TipoToken.PuntoComa);
     }
-    
+
     private void analizarListaValores() {
         analizarValor();
         while (tokenActual != null && tokenActual.getTipo() == TipoToken.Coma) {
@@ -89,7 +89,7 @@ public class Sintactico {
             analizarValor();
         }
     }
-    
+
     private void analizarValor() {
         if (tokenActual == null) throw new RuntimeException("Error: Fin inesperado");
 
@@ -100,7 +100,7 @@ public class Sintactico {
         } else if (tokenActual.getTipo() == TipoToken.NumeroDecimal) {
             emparejar(TipoToken.NumeroDecimal);
         } else {
-             throw new RuntimeException("Error Sintáctico: Se esperaba un valor pero se encontro " + tokenActual.getLexema());
+            throw new RuntimeException("Error Sintáctico: Se esperaba un valor pero se encontro " + tokenActual.getLexema());
         }
     }
 
@@ -168,6 +168,7 @@ public class Sintactico {
         throw new UnsupportedOperationException("Falta implementar: analizarAsignacion");
     }
 
+    // Ese es mio
     private void analizarDefinicionesCol() {
         throw new UnsupportedOperationException("Falta implementar: analizarDefinicionesCol");
     }
@@ -200,6 +201,7 @@ public class Sintactico {
         throw new UnsupportedOperationException("Falta implementar: analizarExpresionLogica");
     }
 
+    // Hasta aqui
     private void analizarOperadorLogico() {
         throw new UnsupportedOperationException("Falta implementar: analizarOperadorLogico");
     }
