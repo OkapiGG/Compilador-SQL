@@ -1,7 +1,6 @@
 /*
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  */
-
 package com.mycompany.compsql;
 
 import java.util.List;
@@ -11,13 +10,20 @@ import java.util.List;
  * @author alancervantes
  */
 public class CompSQL {
+
     public static void main(String[] args) {
         Lexico lexico = new Lexico();
 
-        List<Token> tokensGenerados = lexico.analizar("Truncar tabla historial;");
-    
-        System.out.println("Tokens Generados: " + tokensGenerados.size());
+        String codigo =  "crear tabla usuarios ( id entero primaria, nombre texto Nulo);";
         
+        List<Token> tokensGenerados = lexico.analizar(codigo);
+
+        System.out.println("Tokens Generados: " + tokensGenerados.size());
+        for (Token t : tokensGenerados) {
+            System.out.println(t.getTipo() + " -> " + t.getLexema());
+        }
+        System.out.println("\nANALISIS:");
+
         Sintactico sintactico = new Sintactico(tokensGenerados);
         sintactico.analizarPrograma();
     }
