@@ -62,6 +62,7 @@ public class Lexico {
         mapaToken.put("decimal", TipoToken.Decimal);
         mapaToken.put("fecha", TipoToken.Fecha);
         mapaToken.put("booleanolc", TipoToken.Booleano);
+        mapaToken.put("base" , TipoToken.Base_de_Datos);
         
         // Restriccione
         mapaToken.put("defecto", TipoToken.Defecto);
@@ -117,6 +118,7 @@ public class Lexico {
         mapaToken.put(">=", TipoToken.MayorIgualQue);
         mapaToken.put("<=", TipoToken.MenorIgualQue);
         mapaToken.put("!=", TipoToken.Diferente);
+        mapaToken.put(" '' ", TipoToken.Comilla_Simple);
     }
 
     public List<Token> analizar(String codigo) {

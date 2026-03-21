@@ -14,8 +14,10 @@ public class CompSQL {
     public static void main(String[] args) {
         Lexico lexico = new Lexico();
 
-        String codigo =  "crear tabla usuarios ( id entero primaria, nombre texto Nulo);";
-        
+        // String codigo = "seleccionar nombre de usuarios donde edad > 18 y nombre = \"Alan\";";
+        // String codigo = "crear tabla usuarios ( id entero primaria, nombre texto Nulo);";
+        String codigo = "crear base mibd;";
+
         List<Token> tokensGenerados = lexico.analizar(codigo);
 
         System.out.println("Tokens Generados: " + tokensGenerados.size());
