@@ -11,6 +11,7 @@ import java.util.List;
  * @author alancervantes
  */
 public class Sintactico {
+
     private List<Token> tokens;
     private int posicionActual;
     private Token tokenActual;
@@ -51,7 +52,7 @@ public class Sintactico {
             if (tokenActual.getTipo() == TipoToken.Insertar) {
                 analizarInsertar();
             } else if (tokenActual.getTipo() == TipoToken.Crear) {
-                analizarCrearTabla();
+                analizarCrear();
             } else if (tokenActual.getTipo() == TipoToken.Seleccionar) {
                 analizarSeleccionar();
             } else if (tokenActual.getTipo() == TipoToken.Actualizar) {
@@ -90,7 +91,9 @@ public class Sintactico {
     }
 
     private void analizarValor() {
-        if (tokenActual == null) throw new RuntimeException("Error: Fin inesperado");
+        if (tokenActual == null) {
+            throw new RuntimeException("Error: Fin inesperado");
+        }
 
         if (tokenActual.getTipo() == TipoToken.Cadena) {
             emparejar(TipoToken.Cadena);
@@ -98,29 +101,50 @@ public class Sintactico {
             emparejar(TipoToken.NumeroEntero);
         } else if (tokenActual.getTipo() == TipoToken.NumeroDecimal) {
             emparejar(TipoToken.NumeroDecimal);
+        } else if (tokenActual.getTipo() == TipoToken.Verdadero) {
+            emparejar(TipoToken.Verdadero);
+        } else if (tokenActual.getTipo() == TipoToken.Falso) {
+            emparejar(TipoToken.Falso);
+        } else if (tokenActual.getTipo() == TipoToken.Nulo) {
+            emparejar(TipoToken.Nulo);
         } else {
             throw new RuntimeException("Error Sintáctico: Se esperaba un valor pero se encontro " + tokenActual.getLexema());
         }
     }
 
+    private void analizarCrear() {
+        emparejar(TipoToken.Crear);
+
+        if (tokenActual == null) {
+            throw new RuntimeException("Error: se esperaba 'tabla' o 'base'");
+        }
+
+        if (tokenActual.getTipo() == TipoToken.Tabla) {
+            analizarCrearTabla();
+        } else if (tokenActual.getTipo() == TipoToken.Base_de_Datos
+                || tokenActual.getTipo() == TipoToken.Base
+                || tokenActual.getTipo() == TipoToken.BaseDeDatos) {
+            analizarCrearBase();
+        } else {
+            throw new RuntimeException("Error: después de 'crear' se esperaba 'tabla' o 'base' pero se encontró " + tokenActual.getLexema());
+        }
+    }
+
     private void analizarSeleccionar() {
-       emparejar(TipoToken.Seleccionar);
-        
-        // Manejo opcional de DISTINCT
+        emparejar(TipoToken.Seleccionar);
+
         if (tokenActual != null && tokenActual.getTipo() == TipoToken.Distinto) {
             analizarDistinto();
         }
-        
+
         analizarListaItemsSelect();
         emparejar(TipoToken.De);
         emparejar(TipoToken.Identificador);
-        
-        // Opcional: WHERE 
+
         if (tokenActual != null && tokenActual.getTipo() == TipoToken.Donde) {
             analizarOpcWhere();
         }
-        
-        
+
         if (tokenActual != null && tokenActual.getTipo() == TipoToken.PuntoComa) {
             emparejar(TipoToken.PuntoComa);
         }
@@ -129,10 +153,10 @@ public class Sintactico {
     private void analizarActualizar() {
         emparejar(TipoToken.Actualizar);
         emparejar(TipoToken.Identificador);
-        emparejar(TipoToken.Establecer); 
-        
-        analizarListaAsignaciones(); 
-        
+        emparejar(TipoToken.Establecer);
+
+        analizarListaAsignaciones();
+
         if (tokenActual != null && tokenActual.getTipo() == TipoToken.Donde) {
             analizarOpcWhere();
         }
@@ -141,9 +165,9 @@ public class Sintactico {
 
     private void analizarEliminar() {
         emparejar(TipoToken.Eliminar);
-        emparejar(TipoToken.De); 
+        emparejar(TipoToken.De);
         emparejar(TipoToken.Identificador);
-        
+
         if (tokenActual != null && tokenActual.getTipo() == TipoToken.Donde) {
             analizarOpcWhere();
         }
@@ -151,14 +175,28 @@ public class Sintactico {
     }
 
     private void analizarCrearTabla() {
-        emparejar(TipoToken.Crear);
         emparejar(TipoToken.Tabla);
         emparejar(TipoToken.Identificador);
         emparejar(TipoToken.ParentesisAbre);
-        
-        analizarDefinicionesCol(); 
-        
+
+        analizarDefinicionesCol();
+
         emparejar(TipoToken.ParentesisCierra);
+        emparejar(TipoToken.PuntoComa);
+    }
+
+    private void analizarCrearBase() {
+        if (tokenActual.getTipo() == TipoToken.Base_de_Datos) {
+            emparejar(TipoToken.Base_de_Datos);
+        } else if (tokenActual.getTipo() == TipoToken.Base) {
+            emparejar(TipoToken.Base);
+        } else if (tokenActual.getTipo() == TipoToken.BaseDeDatos) {
+            emparejar(TipoToken.BaseDeDatos);
+        } else {
+            throw new RuntimeException("Error: se esperaba 'base'");
+        }
+
+        emparejar(TipoToken.Identificador);
         emparejar(TipoToken.PuntoComa);
     }
 
@@ -182,27 +220,26 @@ public class Sintactico {
     }
 
     private void analizarListaItemsSelect() {
-        // En tu léxico no veo el token Asterisco (*), 
-        // así que por ahora manejamos solo lista de columnas.
         analizarColumnas();
     }
 
     private void analizarItemSelect() {
         analizarExpresionCol();
         analizarAlias();
-        throw new UnsupportedOperationException("Falta implementar: analizarItemSelect");
     }
 
     private void analizarExpresionCol() {
-        if (tokenActual == null) throw new RuntimeException("Fin inesperado en EXPRESION_COL");
-        
+        if (tokenActual == null) {
+            throw new RuntimeException("Fin inesperado en EXPRESION_COL");
+        }
+
         if (tokenActual.getTipo() == TipoToken.Identificador) {
             emparejar(TipoToken.Identificador);
-        } else if (tokenActual.getTipo() == TipoToken.Contar ||
-                tokenActual.getTipo() == TipoToken.Suma||
-                tokenActual.getTipo() == TipoToken.Promedio ||
-                tokenActual.getTipo() == TipoToken.Maximo ||
-                tokenActual.getTipo() == TipoToken.Minimo) {
+        } else if (tokenActual.getTipo() == TipoToken.Contar
+                || tokenActual.getTipo() == TipoToken.Suma
+                || tokenActual.getTipo() == TipoToken.Promedio
+                || tokenActual.getTipo() == TipoToken.Maximo
+                || tokenActual.getTipo() == TipoToken.Minimo) {
             analizarAgregacion();
             emparejar(TipoToken.ParentesisAbre);
             emparejar(TipoToken.Identificador);
@@ -210,12 +247,13 @@ public class Sintactico {
         } else {
             throw new RuntimeException("EXPRESION_COL invalida: " + tokenActual.getLexema());
         }
-        throw new UnsupportedOperationException("Falta implementar: analizarExpresionCol");
     }
 
     private void analizarAgregacion() {
-        if (tokenActual == null) throw new RuntimeException("Fin inesperado en AGREGACION");
-        
+        if (tokenActual == null) {
+            throw new RuntimeException("Fin inesperado en AGREGACION");
+        }
+
         switch (tokenActual.getTipo()) {
             case Contar:
             case Suma:
@@ -227,35 +265,39 @@ public class Sintactico {
             default:
                 throw new RuntimeException("Agregacion inválida: " + tokenActual.getLexema());
         }
-        throw new UnsupportedOperationException("Falta implementar: analizarAgregacion");
     }
 
     private void analizarAlias() {
-        if (tokenActual != null && (tokenActual.getTipo() == TipoToken.Como || tokenActual.getTipo() == TipoToken.As)) {
+        if (tokenActual != null && (tokenActual.getTipo() == TipoToken.Como
+                || tokenActual.getTipo() == TipoToken.As
+                || tokenActual.getTipo() == TipoToken.Alias)) {
             emparejar(tokenActual.getTipo());
             emparejar(TipoToken.Identificador);
         }
-        throw new UnsupportedOperationException("Falta implementar: analizarAlias");
     }
 
     private void analizarJoin() {
-        if (tokenActual == null) return;
-        if (tokenActual.getTipo() == TipoToken.UnirInterno ||
-                tokenActual.getTipo() == TipoToken.UnirIzquierdo ||
-                tokenActual.getTipo() == TipoToken.UnirDerecho ||
-                tokenActual.getTipo() == TipoToken.Unir) {
+        if (tokenActual == null) {
+            return;
+        }
+        if (tokenActual.getTipo() == TipoToken.UnirInterno
+                || tokenActual.getTipo() == TipoToken.UnirIzquierdo
+                || tokenActual.getTipo() == TipoToken.UnirDerecho
+                || tokenActual.getTipo() == TipoToken.Unir) {
             analizarTipoJoin();
             emparejar(TipoToken.Unir);
-            emparejar(TipoToken.Identificador); 
+            emparejar(TipoToken.Identificador);
             emparejar(TipoToken.En);
-            analizarCondicion(); 
+            analizarCondicion();
         }
         throw new UnsupportedOperationException("Falta implementar: analizarJoin");
     }
 
     private void analizarTipoJoin() {
-        if (tokenActual == null) return;
-        
+        if (tokenActual == null) {
+            return;
+        }
+
         switch (tokenActual.getTipo()) {
             case UnirInterno:
             case UnirIzquierdo:
@@ -274,85 +316,183 @@ public class Sintactico {
             emparejar(TipoToken.Coma);
             analizarAsignacion();
         }
-        throw new UnsupportedOperationException("Falta implementar: analizarListaAsignaciones");
     }
 
     private void analizarAsignacion() {
         emparejar(TipoToken.Identificador);
         emparejar(TipoToken.Igual);
-        if (tokenActual.getTipo() == TipoToken.NumeroEntero ||
-                tokenActual.getTipo() == TipoToken.NumeroDecimal ||
-                tokenActual.getTipo() == TipoToken.Cadena ||
-                tokenActual.getTipo() == TipoToken.Booleano ||
-                tokenActual.getTipo() == TipoToken.Nulo) {
+
+        if (tokenActual == null) {
+            throw new RuntimeException("Fin inesperado en ASIGNACION");
+        }
+
+        if (tokenActual.getTipo() == TipoToken.NumeroEntero
+                || tokenActual.getTipo() == TipoToken.NumeroDecimal
+                || tokenActual.getTipo() == TipoToken.Cadena
+                || tokenActual.getTipo() == TipoToken.Verdadero
+                || tokenActual.getTipo() == TipoToken.Falso
+                || tokenActual.getTipo() == TipoToken.Nulo) {
             emparejar(tokenActual.getTipo());
         } else {
             throw new RuntimeException("Valor inválido en ASIGNACION: " + tokenActual.getLexema());
         }
-        throw new UnsupportedOperationException("Falta implementar: analizarAsignacion");
     }
 
     // Ese es mio
     private void analizarDefinicionesCol() {
-        throw new UnsupportedOperationException("Falta implementar: analizarDefinicionesCol");
+        if (tokenActual == null) {
+            throw new RuntimeException("Error: se esperaba definición de columna");
+        }
+
+        if (tokenActual.getTipo() == TipoToken.LlaveForanea) {
+            analizarFk();
+        } else {
+            analizarColumnaDef();
+        }
+
+        while (tokenActual != null && tokenActual.getTipo() == TipoToken.Coma) {
+            emparejar(TipoToken.Coma);
+
+            if (tokenActual == null) {
+                throw new RuntimeException("Error: se esperaba otra definición después de la coma");
+            }
+
+            if (tokenActual.getTipo() == TipoToken.LlaveForanea) {
+                analizarFk();
+            } else {
+                analizarColumnaDef();
+            }
+        }
     }
 
     private void analizarColumnaDef() {
-        throw new UnsupportedOperationException("Falta implementar: analizarColumnaDef");
+        emparejar(TipoToken.Identificador);
+        analizarTipoDato();
+        analizarRestricciones();
     }
 
     private void analizarTipoDato() {
-        throw new UnsupportedOperationException("Falta implementar: analizarTipoDato");
+        if (tokenActual == null) {
+            throw new RuntimeException("Error: se esperaba un tipo de dato pero se encontró fin de código");
+        }
+
+        if (tokenActual.getTipo() == TipoToken.Entero) {
+            emparejar(TipoToken.Entero);
+        } else if (tokenActual.getTipo() == TipoToken.Texto) {
+            emparejar(TipoToken.Texto);
+        } else if (tokenActual.getTipo() == TipoToken.Decimal) {
+            emparejar(TipoToken.Decimal);
+        } else if (tokenActual.getTipo() == TipoToken.Fecha) {
+            emparejar(TipoToken.Fecha);
+        } else if (tokenActual.getTipo() == TipoToken.Booleano) {
+            emparejar(TipoToken.Booleano);
+        } else {
+            throw new RuntimeException("Error sintáctico: tipo de dato no válido: " + tokenActual.getLexema());
+        }
     }
 
     private void analizarRestricciones() {
-        throw new UnsupportedOperationException("Falta implementar: analizarRestricciones");
+        while (tokenActual != null
+                && (tokenActual.getTipo() == TipoToken.NoNulo
+                || tokenActual.getTipo() == TipoToken.Nulo
+                || tokenActual.getTipo() == TipoToken.Unico
+                || tokenActual.getTipo() == TipoToken.LlavePrimaria
+                || tokenActual.getTipo() == TipoToken.AutoIncremento
+                || tokenActual.getTipo() == TipoToken.Defecto)) {
+            analizarRestriccion();
+        }
     }
 
     private void analizarRestriccion() {
-        throw new UnsupportedOperationException("Falta implementar: analizarRestriccion");
+        if (tokenActual == null) {
+            throw new RuntimeException("Error: se esperaba una restricción pero se encontró fin de código");
+        }
+
+        if (tokenActual.getTipo() == TipoToken.NoNulo) {
+            emparejar(TipoToken.NoNulo);
+        } else if (tokenActual.getTipo() == TipoToken.Nulo) {
+            emparejar(TipoToken.Nulo);
+        } else if (tokenActual.getTipo() == TipoToken.Unico) {
+            emparejar(TipoToken.Unico);
+        } else if (tokenActual.getTipo() == TipoToken.LlavePrimaria) {
+            emparejar(TipoToken.LlavePrimaria);
+        } else if (tokenActual.getTipo() == TipoToken.AutoIncremento) {
+            emparejar(TipoToken.AutoIncremento);
+        } else if (tokenActual.getTipo() == TipoToken.Defecto) {
+            emparejar(TipoToken.Defecto);
+            analizarValor();
+        } else {
+            throw new RuntimeException("Error sintáctico: restricción no válida: " + tokenActual.getLexema());
+        }
     }
 
     private void analizarFk() {
-        throw new UnsupportedOperationException("Falta implementar: analizarFk");
+        emparejar(TipoToken.LlaveForanea);
+        emparejar(TipoToken.ParentesisAbre);
+        emparejar(TipoToken.Identificador);
+        emparejar(TipoToken.ParentesisCierra);
+        emparejar(TipoToken.Referencia);
+        emparejar(TipoToken.Identificador);
+        emparejar(TipoToken.ParentesisAbre);
+        emparejar(TipoToken.Identificador);
+        emparejar(TipoToken.ParentesisCierra);
     }
 
     private void analizarOpcWhere() {
-        throw new UnsupportedOperationException("Falta implementar: analizarOpcWhere");
+        emparejar(TipoToken.Donde);
+        analizarExpresionLogica();
     }
 
     private void analizarExpresionLogica() {
-        throw new UnsupportedOperationException("Falta implementar: analizarExpresionLogica");
+        analizarCondicion();
+
+        while (tokenActual != null
+                && (tokenActual.getTipo() == TipoToken.Y
+                || tokenActual.getTipo() == TipoToken.O
+                || tokenActual.getTipo() == TipoToken.AND
+                || tokenActual.getTipo() == TipoToken.OR)) {
+            analizarOperadorLogico();
+            analizarCondicion();
+        }
     }
 
-    // Hasta aqui
     private void analizarOperadorLogico() {
-        throw new UnsupportedOperationException("Falta implementar: analizarOperadorLogico");
+        if (tokenActual == null) {
+            throw new RuntimeException("Error: se esperaba operador lógico pero se encontró fin de código");
+        }
+
+        if (tokenActual.getTipo() == TipoToken.Y) {
+            emparejar(TipoToken.Y);
+        } else if (tokenActual.getTipo() == TipoToken.O) {
+            emparejar(TipoToken.O);
+        } else if (tokenActual.getTipo() == TipoToken.AND) {
+            emparejar(TipoToken.AND);
+        } else if (tokenActual.getTipo() == TipoToken.OR) {
+            emparejar(TipoToken.OR);
+        } else {
+            throw new RuntimeException("Error sintáctico: se esperaba operador lógico y/o pero se encontró " + tokenActual.getLexema());
+        }
     }
 
-    //------
     private void analizarCondicion() {
         emparejar(TipoToken.Identificador);
-        
-        if(tokenActual != null && tokenActual.getTipo() == TipoToken.Entre){
+
+        if (tokenActual != null && tokenActual.getTipo() == TipoToken.Entre) {
             emparejar(TipoToken.Entre);
             analizarValor();
             emparejar(TipoToken.Y);
             analizarValor();
-        } else{
+        } else {
             analizarOpRel();
             analizarValor();
         }
-        
-        throw new UnsupportedOperationException("Falta implementar: analizarCondicion");
     }
 
     private void analizarOpRel() {
-        
-        if(tokenActual == null){
+        if (tokenActual == null) {
             throw new RuntimeException("Error: Se esperaba un operador relacional pero se encontro fin de codigo");
         }
-        
+
         if (tokenActual.getTipo() == TipoToken.Igual) {
             emparejar(TipoToken.Igual);
         } else if (tokenActual.getTipo() == TipoToken.Diferente) {
@@ -368,85 +508,83 @@ public class Sintactico {
         } else {
             throw new RuntimeException("Error Sintactico: Se esperaba un operador relacional (=, >, <, etc) pero se encontro " + tokenActual.getLexema());
         }
-        
-        throw new UnsupportedOperationException("Falta implementar: analizarOpRel");
     }
 
     private void analizarGroupBy() {
-        
-        if(tokenActual != null && tokenActual.getTipo() == TipoToken.Grupo){
+
+        if (tokenActual != null && tokenActual.getTipo() == TipoToken.Grupo) {
             emparejar(TipoToken.Grupo);
             emparejar(TipoToken.Por);
-            
+
             analizarListaId();
             analizarHaving();
         }
-        
+
         throw new UnsupportedOperationException("Falta implementar: analizarGroupBy");
     }
 
     private void analizarHaving() {
-        
-        if(tokenActual != null && tokenActual.getTipo() == TipoToken.Tener){
+
+        if (tokenActual != null && tokenActual.getTipo() == TipoToken.Tener) {
             emparejar(TipoToken.Tener);
             analizarExpresionLogica();
         }
-        
+
         throw new UnsupportedOperationException("Falta implementar: analizarHaving");
     }
 
     private void analizarOrderBy() {
-        
-        if(tokenActual != null && tokenActual.getTipo() == TipoToken.Ordernar){
+
+        if (tokenActual != null && tokenActual.getTipo() == TipoToken.Ordernar) {
             emparejar(TipoToken.Ordernar);
             emparejar(TipoToken.Por);
-            
+
             analizarListaOrden();
-            
+
         }
         throw new UnsupportedOperationException("Falta implementar: analizarOrderBy");
     }
 
     private void analizarListaOrden() {
-        
+
         emparejar(TipoToken.Identificador);
-        
+
         analizarSentido();
-        
-        while(tokenActual != null && tokenActual.getTipo() == TipoToken.Coma){
+
+        while (tokenActual != null && tokenActual.getTipo() == TipoToken.Coma) {
             emparejar(TipoToken.Coma);
             emparejar(TipoToken.Identificador);
             analizarSentido();
         }
-        
+
         throw new UnsupportedOperationException("Falta implementar: analizarListaOrden");
     }
 
     private void analizarSentido() {
-        
-        if(tokenActual != null && tokenActual.getTipo() == TipoToken.Asc){
+
+        if (tokenActual != null && tokenActual.getTipo() == TipoToken.Asc) {
             emparejar(TipoToken.Asc);
-        } else if(tokenActual != null && tokenActual.getTipo() == TipoToken.Desc){
+        } else if (tokenActual != null && tokenActual.getTipo() == TipoToken.Desc) {
             emparejar(TipoToken.Desc);
         }
-        
+
         throw new UnsupportedOperationException("Falta implementar: analizarSentido");
     }
 
     private void analizarLimit() {
-        
+
         if (tokenActual != null && tokenActual.getTipo() == TipoToken.Limite) {
             emparejar(TipoToken.Limite);
-            
+
             emparejar(TipoToken.NumeroEntero);
         }
         throw new UnsupportedOperationException("Falta implementar: analizarLimit");
     }
-    
+
     private void analizarListaId() {
-        
+
         emparejar(TipoToken.Identificador);
-        
+
         while (tokenActual != null && tokenActual.getTipo() == TipoToken.Coma) {
             emparejar(TipoToken.Coma);
             emparejar(TipoToken.Identificador);
