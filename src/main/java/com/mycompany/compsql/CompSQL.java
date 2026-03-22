@@ -15,13 +15,19 @@ public class CompSQL {
         Lexico lexico = new Lexico();
 
         // String codigo = "seleccionar nombre de usuarios donde edad > 18 y nombre = \"Alan\";";
-        // String codigo = "crear tabla usuarios ( id entero primaria, nombre texto Nulo);";
-        String codigo = "crear base mibd;";
+        // String codigo = "crear tablsa usuarios ( id entero primaria, nombre texto Nulo);";
+        //String codigo = "crear base mibd;";
 
         //List<Token> tokensGenerados = lexico.analizar(codigo);
+        List<Token> tokensGenerados = lexico.analizar("insertar en tabla Doctores valores (1, \"Dr. House\", \"Diagnostico\", falso);");
+//        List<Token> tokensGenerados = lexico.analizar("crear tabla Usuarios (\n"
+//                + "    id entero primaria auto_incremento,\n"
+//                + "    nombre texto no_nulo,\n"
+//                + "    correo texto unico,\n"
+//                + "    edad entero,\n"
+//                + "    es_cliente booleano defecto verdadero\n"
+//                + ");");
 
-        List<Token> tokensGenerados = lexico.analizar("crear tabla usuarios ( 1 , “ Emanuel ”,  “ Perez ” ,  ” 9621657244 ” );");
-    
         System.out.println("Tokens Generados: " + tokensGenerados.size());
         for (Token t : tokensGenerados) {
             System.out.println(t.getTipo() + " -> " + t.getLexema());

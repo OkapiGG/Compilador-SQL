@@ -1,5 +1,5 @@
-/Users/emanuel/Downloads/CompiladorSQL/Compilador-SQL/src/main/java/com/mycompany/compsql/CompSQL.java
-/Users/emanuel/Downloads/CompiladorSQL/Compilador-SQL/src/main/java/com/mycompany/compsql/Lexico.java
-/Users/emanuel/Downloads/CompiladorSQL/Compilador-SQL/src/main/java/com/mycompany/compsql/Sintactico.java
-/Users/emanuel/Downloads/CompiladorSQL/Compilador-SQL/src/main/java/com/mycompany/compsql/TipoToken.java
-/Users/emanuel/Downloads/CompiladorSQL/Compilador-SQL/src/main/java/com/mycompany/compsql/Token.java
+/Users/alancervantes/NetBeansProjects/CompSQL/src/main/java/com/mycompany/compsql/CompSQL.java
+/Users/alancervantes/NetBeansProjects/CompSQL/src/main/java/com/mycompany/compsql/Lexico.java
+/Users/alancervantes/NetBeansProjects/CompSQL/src/main/java/com/mycompany/compsql/Sintactico.java
+/Users/alancervantes/NetBeansProjects/CompSQL/src/main/java/com/mycompany/compsql/TipoToken.java
+/Users/alancervantes/NetBeansProjects/CompSQL/src/main/java/com/mycompany/compsql/Token.java

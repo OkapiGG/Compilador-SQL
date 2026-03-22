@@ -61,7 +61,7 @@ public class Lexico {
         mapaToken.put("texto", TipoToken.Texto);
         mapaToken.put("decimal", TipoToken.Decimal);
         mapaToken.put("fecha", TipoToken.Fecha);
-        mapaToken.put("booleanolc", TipoToken.Booleano);
+        mapaToken.put("booleano", TipoToken.Booleano);
         mapaToken.put("base" , TipoToken.Base_de_Datos);
         
         // Restriccione
@@ -162,14 +162,17 @@ public class Lexico {
     }
 
     public String obtenerIdentificador(String codigo) {
-        String resultado = "";
-        while (i < codigo.length() && (Character.isLetter(codigo.charAt(i)) || Character.isDigit(codigo.charAt(i)))) {
-            resultado += codigo.charAt(i);
-            i++;
-        }
-        i--;
-        return resultado;
+    String resultado = "";
+    while (i < codigo.length() && 
+          (Character.isLetter(codigo.charAt(i)) || 
+           Character.isDigit(codigo.charAt(i)) || 
+           codigo.charAt(i) == '_')) { 
+        resultado += codigo.charAt(i);
+        i++;
     }
+    i--;
+    return resultado;
+}
     
     public Token obtenerNumero(String codigo, char actual) {
         String resultado = "";
