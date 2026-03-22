@@ -1,4 +1,5 @@
 /Users/alancervantes/NetBeansProjects/CompSQL/src/main/java/com/mycompany/compsql/CompSQL.java
+/Users/alancervantes/NetBeansProjects/CompSQL/src/main/java/com/mycompany/compsql/ConexionBD.java
 /Users/alancervantes/NetBeansProjects/CompSQL/src/main/java/com/mycompany/compsql/Lexico.java
 /Users/alancervantes/NetBeansProjects/CompSQL/src/main/java/com/mycompany/compsql/Sintactico.java
 /Users/alancervantes/NetBeansProjects/CompSQL/src/main/java/com/mycompany/compsql/TipoToken.java

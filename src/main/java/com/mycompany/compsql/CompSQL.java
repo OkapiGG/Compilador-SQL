@@ -3,6 +3,7 @@
  */
 package com.mycompany.compsql;
 
+import java.sql.Connection;
 import java.util.List;
 
 /**
@@ -13,6 +14,14 @@ public class CompSQL {
 
     public static void main(String[] args) {
         Lexico lexico = new Lexico();
+        
+        Connection c = ConexionBD.getInstancia();
+    
+        if (c != null) {
+            System.out.println("Compilador conectado a postgres");
+        } else {
+            System.err.println("Fallo de conexion");
+        }
     
         // String codigo = "seleccionar nombre de usuarios donde edad > 18 y nombre = \"Alan\";";
         // String codigo = "crear tablsa usuarios ( id entero primaria, nombre texto Nulo);";
