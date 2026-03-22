@@ -18,8 +18,10 @@ public class CompSQL {
         // String codigo = "crear tabla usuarios ( id entero primaria, nombre texto Nulo);";
         String codigo = "crear base mibd;";
 
-        List<Token> tokensGenerados = lexico.analizar(codigo);
+        //List<Token> tokensGenerados = lexico.analizar(codigo);
 
+        List<Token> tokensGenerados = lexico.analizar("crear tabla usuarios ( 1 , “ Emanuel ”,  “ Perez ” ,  ” 9621657244 ” );");
+    
         System.out.println("Tokens Generados: " + tokensGenerados.size());
         for (Token t : tokensGenerados) {
             System.out.println(t.getTipo() + " -> " + t.getLexema());
