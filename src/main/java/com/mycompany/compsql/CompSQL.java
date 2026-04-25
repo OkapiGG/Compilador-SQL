@@ -45,5 +45,18 @@ public class CompSQL {
 
         Sintactico sintactico = new Sintactico(tokensGenerados);
         sintactico.analizarPrograma();
+        
+        
+        //------
+        List<Token> tokenGenerados2 = lexico.analizar("seleccionar nombre de Ventas donde total entre 100 y 500;");
+        
+        System.out.println("\nTokens Generados: " + tokenGenerados2.size());
+        for (Token t : tokenGenerados2) {
+            System.out.println(t.getTipo() + " -> " + t.getLexema());
+        }
+        System.out.println("\nANALISIS:");
+
+        Sintactico sintactico2 = new Sintactico(tokenGenerados2);
+        sintactico2.analizarPrograma();
     }
 }
