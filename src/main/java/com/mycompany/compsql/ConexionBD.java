@@ -7,6 +7,7 @@ package com.mycompany.compsql;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.sql.Statement;
 
 /**
  *
@@ -37,6 +38,20 @@ public class ConexionBD {
             System.err.println("Error de sql: " + e.getMessage());
         }
         return conexion;
+    }
+    
+    public static void ejecutar(String sql) {
+        try {
+            Connection conn = getInstancia();
+            if (conn != null) {
+                Statement stmt = conn.createStatement();
+                stmt.execute(sql);
+                System.out.println("Comando ejecutado en PostgreSQL");
+                stmt.close();
+            }
+        } catch (SQLException e) {
+            System.err.println("Error al ejecutar en Postgres: " + e.getMessage());
+        }
     }
     
     public static void cerrarConexion() {
