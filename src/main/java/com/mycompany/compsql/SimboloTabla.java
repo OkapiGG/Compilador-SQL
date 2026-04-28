@@ -4,7 +4,7 @@
  */
 package com.mycompany.compsql;
 
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
@@ -13,12 +13,12 @@ import java.util.Map;
  */
 public class SimboloTabla {
     
-    private String nombre;
-    private Map<String, SimboloColumna> columnas;
+    private final String nombre;
+    private final Map<String, SimboloColumna> columnas;
     
     public SimboloTabla(String nombre){
         this.nombre = nombre;
-        this.columnas = new HashMap<>();
+        this.columnas = new LinkedHashMap<>();
     }
     
     public String getNombre(){
@@ -26,15 +26,15 @@ public class SimboloTabla {
     }
     
     public void agregarColumna(SimboloColumna col){
-        columnas.put(col.getNombre(), col);
+        columnas.put(col.getNombre().toLowerCase(), col);
     }
     
     public boolean existeColumna(String nombreColumna){
-        return columnas.containsKey(nombreColumna);
+        return columnas.containsKey(nombreColumna.toLowerCase());
     }
     
     public SimboloColumna obtenerColumna(String nombreColumna){
-        return columnas.get(nombreColumna);
+        return columnas.get(nombreColumna.toLowerCase());
     }
     
     public int getCantidadColumnas(){
@@ -42,7 +42,7 @@ public class SimboloTabla {
     }
     
     public SimboloColumna obtenerColumnaPorIndice(int indice){
-        return (SimboloColumna) columnas.values().toArray()[indice];
+        return columnas.values().stream().skip(indice).findFirst().orElse(null);
     }
     
 }

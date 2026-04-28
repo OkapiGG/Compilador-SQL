@@ -50,31 +50,42 @@ public class Sintactico {
         }
 
         while (tokenActual != null) {
-            if (tokenActual.getTipo() == TipoToken.Insertar) {
-                analizarInsertar();
-            } else if (tokenActual.getTipo() == TipoToken.Crear) {
-                analizarCrear();
-            } else if (tokenActual.getTipo() == TipoToken.Seleccionar) {
-                analizarSeleccionar();
-            } else if (tokenActual.getTipo() == TipoToken.Actualizar) {
-                analizarActualizar();
-            } else if (tokenActual.getTipo() == TipoToken.Eliminar) {
-                analizarEliminar();
-            } else if (tokenActual.getTipo() == TipoToken.Truncar) {
-                analizarTruncar();
-            } else {
-                throw new RuntimeException("Comando principal no reconocido o falta implementarlo: " + tokenActual.getLexema());
+            switch (tokenActual.getTipo()) {
+                case Insertar:
+                    analizarInsertar();
+                    break;
+                case Crear:
+                    analizarCrear();
+                    break;
+                case Seleccionar:
+                    analizarSeleccionar();
+                    break;
+                case Actualizar:
+                    analizarActualizar();
+                    break;
+                case Eliminar:
+                    analizarEliminar();
+                    break;
+                case Truncar:
+                    analizarTruncar();
+                    break;
+                default:
+                    throw new RuntimeException("Comando principal no reconocido o falta implementarlo: " + tokenActual.getLexema());
             }
         }
         System.out.println("Analisis sintactico correcto.");
     }
 
     private void analizarInsertar() {
+        StringBuilder sql = new StringBuilder("INSERT INTO ");
+        
         emparejar(TipoToken.Insertar);
         emparejar(TipoToken.En);
         emparejar(TipoToken.Tabla);
         
         String nombreTabla = tokenActual.getLexema();
+        
+        sql.append(nombreTabla);
   
         emparejar(TipoToken.Identificador);
         
@@ -84,18 +95,27 @@ public class Sintactico {
         
         SimboloTabla tablaDestino = TablaSimbolos.obtenerTabla(nombreTabla);
         
+        sql.append(" VALUES ");
+        
         emparejar(TipoToken.Valores);
+        
+        sql.append(" (");
         emparejar(TipoToken.ParentesisAbre);
 
-        analizarListaValores(tablaDestino);
+        analizarListaValores(tablaDestino, sql);
 
+        sql.append(" );");
         emparejar(TipoToken.ParentesisCierra);
         emparejar(TipoToken.PuntoComa);
         
         System.out.println("Semantica: Insercion validada correctamente para la tabla " + nombreTabla);
+        
+        String consultaFinal = sql.toString();
+        
+        ConexionBD.ejecutar(consultaFinal);
     }
 
-    private void analizarListaValores(SimboloTabla tablaDestino) {
+    private void analizarListaValores(SimboloTabla tablaDestino, StringBuilder sql) {
         int indice = 0;
         int totalColumnas = tablaDestino.getCantidadColumnas();
         
@@ -104,20 +124,23 @@ public class Sintactico {
         }
         
         SimboloColumna columnaActual = tablaDestino.obtenerColumnaPorIndice(indice);
-        analizarValor(columnaActual);
+        analizarValor(columnaActual, sql);
         
         indice++;
         
         while (tokenActual != null && tokenActual.getTipo() == TipoToken.Coma) {
+            
+            sql.append(", ");
+            
             emparejar(TipoToken.Coma);
             
             if (indice >= totalColumnas) {
                 throw new RuntimeException("Error semántico: Se enviaron más valores de los que la tabla '" + tablaDestino.getNombre() + "' soporta.");
             }
-            
+                        
             columnaActual = tablaDestino.obtenerColumnaPorIndice(indice);
             
-            analizarValor(columnaActual);
+            analizarValor(columnaActual, sql);
             
             indice++;            
         }
@@ -126,7 +149,7 @@ public class Sintactico {
         }
     }
 
-    private void analizarValor(SimboloColumna columnaEsperada) {
+    private void analizarValor(SimboloColumna columnaEsperada, StringBuilder sql) {
         if (tokenActual == null) {
             throw new RuntimeException("Error: Fin inesperado");
         }
@@ -135,53 +158,45 @@ public class Sintactico {
         TipoToken tipoEsperado = columnaEsperada.getTipoDato();
         String nombreCol = columnaEsperada.getNombre();
         
+        String valorLiteral = tokenActual.getLexema();
+        
         if(tipoRecibido == TipoToken.Cadena){
             if(tipoEsperado != TipoToken.Texto && tipoEsperado != TipoToken.Fecha){
                 throw new RuntimeException("Error semántico: Incompatibilidad de tipos. La columna '" + nombreCol + "' espera " + tipoEsperado + " pero recibió texto.");
             }
+            String textoLimpio = valorLiteral.replace("\"", "");
+            sql.append("'").append(textoLimpio).append("'");
             emparejar(TipoToken.Cadena);
         }
         else if(tipoRecibido == TipoToken.NumeroEntero){
             if (tipoEsperado != TipoToken.Entero && tipoEsperado != TipoToken.Decimal) {
                 throw new RuntimeException("Error semántico: Incompatibilidad de tipos. La columna '" + nombreCol + "' espera " + tipoEsperado + " pero recibió un número entero.");
             }
+            sql.append(valorLiteral);
             emparejar(TipoToken.NumeroEntero);
         }
         else if (tipoRecibido == TipoToken.NumeroDecimal) {
             if (tipoEsperado != TipoToken.Decimal) {
                 throw new RuntimeException("Error semántico: Incompatibilidad de tipos. La columna '" + nombreCol + "' espera " + tipoEsperado + " pero recibió un número decimal.");
             }
+            sql.append(valorLiteral);
             emparejar(TipoToken.NumeroDecimal);
         }         
         else if (tipoRecibido == TipoToken.Verdadero || tipoRecibido == TipoToken.Falso) {
             if (tipoEsperado != TipoToken.Booleano) {
                 throw new RuntimeException("Error semántico: Incompatibilidad de tipos. La columna '" + nombreCol + "' espera " + tipoEsperado + " pero recibió un booleano.");
             }
+            sql.append(valorLiteral.equalsIgnoreCase("verdadero") ? "TRUE" : "FALSE");
             emparejar(tipoRecibido); 
         }         
         else if (tipoRecibido == TipoToken.Nulo) {
+            sql.append("NULL");
             emparejar(TipoToken.Nulo);
         }         
         else {
             throw new RuntimeException("Error Sintáctico: Se esperaba un valor pero se encontró " + tokenActual.getLexema());
         }
-    }
-
-    private void analizarValor() {
-        if (tokenActual == null) {
-            throw new RuntimeException("Error: Fin inesperado");
-        }
-
-        if (tokenActual.getTipo() == TipoToken.NumeroEntero
-                || tokenActual.getTipo() == TipoToken.NumeroDecimal
-                || tokenActual.getTipo() == TipoToken.Cadena
-                || tokenActual.getTipo() == TipoToken.Verdadero
-                || tokenActual.getTipo() == TipoToken.Falso
-                || tokenActual.getTipo() == TipoToken.Nulo) {
-            emparejar(tokenActual.getTipo());
-        } else {
-            throw new RuntimeException("Error Sintáctico: Se esperaba un valor literal pero se encontró " + tokenActual.getLexema());
-        }
+        
     }
 
     private void analizarCrear() {
@@ -203,54 +218,66 @@ public class Sintactico {
     }
 
     private void analizarSeleccionar() {
+        StringBuilder sql = new StringBuilder("SELECT ");
+        
         emparejar(TipoToken.Seleccionar);
 
         if (tokenActual != null && tokenActual.getTipo() == TipoToken.Distinto) {
-            analizarDistinto();
+            analizarDistinto(sql);
         }
 
-        List<ItemSelect> columnasPerdidas = analizarListaItemsSelect();
+        List<ItemSelect> columnasPerdidas = analizarListaItemsSelect(sql);
+        sql.append(" FROM ");
         emparejar(TipoToken.De);
+        
         
         String nombreTabla = tokenActual.getLexema();
         if(!TablaSimbolos.existeTabla(nombreTabla)){
             throw new RuntimeException("Error semantico: La tabla " + nombreTabla + " no existe");
         }
         
+        sql.append(nombreTabla);
+        
         SimboloTabla tablaDestino = TablaSimbolos.obtenerTabla(nombreTabla);
+        List<SimboloTabla> tablasConsulta = new ArrayList<>();
+        tablasConsulta.add(tablaDestino);
+        
+        emparejar(TipoToken.Identificador);
+        analizarJoin(sql, tablasConsulta);
         
         for(ItemSelect item : columnasPerdidas){
             String nombreColumna = item.getNombreColumna();
-            if(!tablaDestino.existeColumna(nombreColumna)){
-                throw new RuntimeException("Error semántico: La columna " + nombreColumna + " no existe en la tabla " + nombreTabla);
+            SimboloColumna columna = resolverColumna(tablasConsulta, nombreColumna);
+            if(columna == null){
+                throw new RuntimeException("Error semántico: La columna " + nombreColumna + " no existe en las tablas de la consulta");
             }
             TipoToken operacion = item.getOperacionAgregacion();
             
             if(operacion == TipoToken.Suma || operacion == TipoToken.Promedio){
-                TipoToken tipoDato = tablaDestino.obtenerColumna(nombreColumna).getTipoDato();
+                TipoToken tipoDato = columna.getTipoDato();
                 
                 if(tipoDato != TipoToken.Entero && tipoDato != TipoToken.Decimal){
                     throw new RuntimeException("Error semantico: No se puede aplicar la funcion " + operacion + " a la columna " + nombreColumna + " porque es de tipo " + tipoDato);
                 }
             }
             
-            
         }
+
+        analizarOpcWhere(tablasConsulta, sql);
+        analizarGroupBy(sql, tablasConsulta);
+        analizarOrderBy(sql, tablasConsulta);
+        analizarLimit(sql);
         
-        emparejar(TipoToken.Identificador);
-
-        if (tokenActual != null && tokenActual.getTipo() == TipoToken.Donde) {
-            analizarOpcWhere(tablaDestino);
-        }
-
-        if (tokenActual != null && tokenActual.getTipo() == TipoToken.PuntoComa) {
-            emparejar(TipoToken.PuntoComa);
-        }
+        sql.append(";");
+        emparejar(TipoToken.PuntoComa);
+        
+        ConexionBD.ejecutarConsulta(sql.toString());
         
         System.out.println("Semántica: Consulta SELECT validada correctamente.");
     }
 
     private void analizarActualizar() {
+        StringBuilder sql = new StringBuilder("UPDATE ");
         emparejar(TipoToken.Actualizar);
         
         String nombreTabla = tokenActual.getLexema();
@@ -259,19 +286,23 @@ public class Sintactico {
         }
         
         SimboloTabla tablaDestino = TablaSimbolos.obtenerTabla(nombreTabla);
+        sql.append(nombreTabla + " ");
         emparejar(TipoToken.Identificador);
         emparejar(TipoToken.Establecer);
+        sql.append("SET ");
 
-        analizarListaAsignaciones(tablaDestino);
+        analizarListaAsignaciones(tablaDestino, sql);
 
-        if (tokenActual != null && tokenActual.getTipo() == TipoToken.Donde) {
-            analizarOpcWhere(tablaDestino);
-        }
+        analizarOpcWhere(tablaDestino, sql);
+        sql.append(";");
         emparejar(TipoToken.PuntoComa);
+        ConexionBD.ejecutar(sql.toString());
         System.out.println("Semantica: Consulta UPDATE validada correctamente.");
     }
 
     private void analizarEliminar() {
+        StringBuilder sql = new StringBuilder("DELETE FROM ");
+        
         emparejar(TipoToken.Eliminar);
         emparejar(TipoToken.De);
         
@@ -281,16 +312,19 @@ public class Sintactico {
         }
         
         SimboloTabla tablaDestino = TablaSimbolos.obtenerTabla(nombreTabla);
+        
+        sql.append(tokenActual.getLexema());
+        
         emparejar(TipoToken.Identificador);
-        
-        
 
-        if (tokenActual != null && tokenActual.getTipo() == TipoToken.Donde) {
-            analizarOpcWhere(tablaDestino);
-        }
+        analizarOpcWhere(tablaDestino, sql);
+        
+        sql.append(";");
         emparejar(TipoToken.PuntoComa);
         
         System.out.println("Semantica: Consulta DELETE validada correctamente");
+        
+        ConexionBD.ejecutar(sql.toString());
     }
 
     private void analizarCrearTabla() {
@@ -319,7 +353,7 @@ public class Sintactico {
         
         sqlTraducido.append(");");
         
-        TablaSimbolos.registrarTabla(nuevaTabla);
+        TablaSimbolos.registrarTabla(nuevaTabla);   
         System.out.println("Semántica: Tabla " + nombreTabla + " registrada exitosamente con sus columnas");
         
         String consultaFinal = sqlTraducido.toString();
@@ -329,6 +363,8 @@ public class Sintactico {
     }
 
     private void analizarCrearBase() {
+        StringBuilder sql = new StringBuilder("CREATE DATABASE ");
+        
         if (tokenActual.getTipo() == TipoToken.Base_de_Datos) {
             emparejar(TipoToken.Base_de_Datos);
         } else if (tokenActual.getTipo() == TipoToken.Base) {
@@ -339,149 +375,196 @@ public class Sintactico {
             throw new RuntimeException("Error: se esperaba 'base'");
         }
 
+        sql.append(tokenActual.getLexema()).append(";");
         emparejar(TipoToken.Identificador);
         emparejar(TipoToken.PuntoComa);
+        
+        ConexionBD.ejecutar(sql.toString());
     }
 
     private void analizarTruncar() {
+        StringBuilder sql = new StringBuilder("TRUNCATE TABLE ");
+        
         emparejar(TipoToken.Truncar);
         emparejar(TipoToken.Tabla);
+        sql.append(tokenActual.getLexema()).append(";");
         emparejar(TipoToken.Identificador);
         emparejar(TipoToken.PuntoComa);
+        
+        ConexionBD.ejecutar(sql.toString());
     }
 
-    private void analizarDistinto() {
+    private void analizarDistinto(StringBuilder sql) {
+        sql.append("DISTINCT ");
         emparejar(TipoToken.Distinto);
     }
 
-    private List<String> analizarColumnas() {
-        ArrayList<String> lista = new ArrayList<>();
-        lista.add(tokenActual.getLexema());
-        emparejar(TipoToken.Identificador);
-        while (tokenActual != null && tokenActual.getTipo() == TipoToken.Coma) {
-            emparejar(TipoToken.Coma);
-            
-            lista.add(tokenActual.getLexema());
-            emparejar(TipoToken.Identificador);
-        }
-        return lista;
-    }
-
-    private List<ItemSelect> analizarListaItemsSelect() {
+    private List<ItemSelect> analizarListaItemsSelect(StringBuilder sql) {
+        
         List<ItemSelect> lista = new ArrayList<>();
-      
-        lista.add(analizarItemSelect()); 
+        
+        lista.add(analizarItemSelect(sql)); 
 
         while (tokenActual != null && tokenActual.getTipo() == TipoToken.Coma) {
+            sql.append(", ");
             emparejar(TipoToken.Coma);
             
-            lista.add(analizarItemSelect());
+            lista.add(analizarItemSelect(sql));
         }
         
         return lista;
     }
 
-    private ItemSelect analizarItemSelect() {
-        ItemSelect item = new ItemSelect();
-        analizarExpresionCol(item);
-        analizarAlias(item);
+    private ItemSelect analizarItemSelect(StringBuilder sql) {
+        ItemSelect item = analizarExpresionCol(sql);
+        analizarAlias(sql);
         return item;
     }
 
-    private void analizarExpresionCol(ItemSelect item) {
+    private ItemSelect analizarExpresionCol(StringBuilder sql) {
         if (tokenActual == null) {
             throw new RuntimeException("Fin inesperado en EXPRESION_COL");
         }
 
         if (tokenActual.getTipo() == TipoToken.Identificador) {
-            item.setNombreColumna(tokenActual.getLexema());
+            String nombreColumna = tokenActual.getLexema();
+            
+            sql.append(nombreColumna);
+            
             emparejar(TipoToken.Identificador);
+            return new ItemSelect(nombreColumna, null);
         } else if (tokenActual.getTipo() == TipoToken.Contar
                 || tokenActual.getTipo() == TipoToken.Suma
                 || tokenActual.getTipo() == TipoToken.Promedio
                 || tokenActual.getTipo() == TipoToken.Maximo
                 || tokenActual.getTipo() == TipoToken.Minimo) {
-            item.setOperacionAgregacion(tokenActual.getTipo());
-            analizarAgregacion();
+            TipoToken operacionAgregacion = tokenActual.getTipo();
+            analizarAgregacion(sql);
+            
+            sql.append("(");
             emparejar(TipoToken.ParentesisAbre);
-            item.setAlias(tokenActual.getLexema());
+            
+            String nombreColumna = tokenActual.getLexema();
+            sql.append(nombreColumna);
+            
             emparejar(TipoToken.Identificador);
+            
+            sql.append(")");
             emparejar(TipoToken.ParentesisCierra);
+            return new ItemSelect(nombreColumna, operacionAgregacion);
         } else {
             throw new RuntimeException("EXPRESION_COL invalida: " + tokenActual.getLexema());
         }
     }
 
-    private void analizarAgregacion() {
-        if (tokenActual == null) {
+    private void analizarAgregacion(StringBuilder sql) {
+        if (tokenActual == null){
             throw new RuntimeException("Fin inesperado en AGREGACION");
         }
-
+        
         switch (tokenActual.getTipo()) {
             case Contar:
+                sql.append("COUNT");
+                emparejar(TipoToken.Contar);
+                break;
             case Suma:
+                sql.append("SUM");
+                emparejar(TipoToken.Suma);
+                break;
             case Promedio:
+                sql.append("AVG");
+                emparejar(TipoToken.Promedio);
+                break;
             case Maximo:
+                sql.append("MAX");
+                emparejar(TipoToken.Maximo);
+                break;
             case Minimo:
-                emparejar(tokenActual.getTipo());
+                sql.append("MIN");
+                emparejar(TipoToken.Minimo);
                 break;
             default:
                 throw new RuntimeException("Agregacion inválida: " + tokenActual.getLexema());
         }
     }
 
-    private void analizarAlias(ItemSelect item) {
+    private void analizarAlias(StringBuilder sql) {
         if (tokenActual != null && (tokenActual.getTipo() == TipoToken.Como
                 || tokenActual.getTipo() == TipoToken.As
                 || tokenActual.getTipo() == TipoToken.Alias)) {
+            sql.append(" AS ");
             emparejar(tokenActual.getTipo());
+            
+            sql.append(tokenActual.getLexema());
+            
             emparejar(TipoToken.Identificador);
         }
     }
 
-    private void analizarJoin() {
-        if (tokenActual == null) {
-            return;
-        }
-        if (tokenActual.getTipo() == TipoToken.UnirInterno
+    private void analizarJoin(StringBuilder sql, List<SimboloTabla> tablasConsulta) {
+        while (tokenActual != null
+                && (tokenActual.getTipo() == TipoToken.UnirInterno
                 || tokenActual.getTipo() == TipoToken.UnirIzquierdo
                 || tokenActual.getTipo() == TipoToken.UnirDerecho
-                || tokenActual.getTipo() == TipoToken.Unir) {
-            analizarTipoJoin();
-            emparejar(TipoToken.Unir);
+                || tokenActual.getTipo() == TipoToken.Unir)) {
+            analizarTipoJoin(sql);
+            
+            if (tokenActual.getTipo() == TipoToken.Unir) {
+                emparejar(TipoToken.Unir);
+            }
+            
+            String nombreTablaJoin = tokenActual.getLexema();
+            if (!TablaSimbolos.existeTabla(nombreTablaJoin)) {
+                throw new RuntimeException("Error semántico: La tabla " + nombreTablaJoin + " no existe.");
+            }
+            
+            tablasConsulta.add(TablaSimbolos.obtenerTabla(nombreTablaJoin));
+            sql.append(nombreTablaJoin).append(" ON ");
+            
             emparejar(TipoToken.Identificador);
             emparejar(TipoToken.En);
-            analizarCondicion(null);
+            
+            analizarExpresionLogicaJoin(tablasConsulta, sql);
         }
-        throw new UnsupportedOperationException("Falta implementar: analizarJoin");
     }
 
-    private void analizarTipoJoin() {
+    private void analizarTipoJoin(StringBuilder sql) {
         if (tokenActual == null) {
             return;
         }
 
         switch (tokenActual.getTipo()) {
             case UnirInterno:
+                sql.append(" INNER JOIN ");
+                emparejar(tokenActual.getTipo());
+                break;
             case UnirIzquierdo:
+                sql.append(" LEFT JOIN ");
+                emparejar(tokenActual.getTipo());
+                break;
             case UnirDerecho:
+                sql.append(" RIGHT JOIN ");
+                emparejar(tokenActual.getTipo());
+                break;
+            case Unir:
+                sql.append(" JOIN ");
                 emparejar(tokenActual.getTipo());
                 break;
             default:
-                break;
+                throw new RuntimeException("Error sintáctico: tipo de join no válido: " + tokenActual.getLexema());
         }
-        throw new UnsupportedOperationException("Falta implementar: analizarTipoJoin");
     }
 
-    private void analizarListaAsignaciones(SimboloTabla tabla) {
-        analizarAsignacion(tabla);
+    private void analizarListaAsignaciones(SimboloTabla tabla, StringBuilder sql) {
+        analizarAsignacion(tabla, sql);
         while (tokenActual != null && tokenActual.getTipo() == TipoToken.Coma) {
+            sql.append(", ");
             emparejar(TipoToken.Coma);
-            analizarAsignacion(tabla);
+            analizarAsignacion(tabla, sql);
         }
     }
 
-    private void analizarAsignacion(SimboloTabla tabla) {
+    private void analizarAsignacion(SimboloTabla tabla, StringBuilder sql) {
         
         String nombreColumna = tokenActual.getLexema();
         
@@ -490,11 +573,12 @@ public class Sintactico {
         }
         
         SimboloColumna columnaDestino = tabla.obtenerColumna(nombreColumna);
+        sql.append(nombreColumna).append(" = ");
         
         emparejar(TipoToken.Identificador);
         emparejar(TipoToken.Igual);
         
-        analizarValor(columnaDestino);
+        analizarValor(columnaDestino, sql);
 
     }
 
@@ -505,7 +589,7 @@ public class Sintactico {
         }
 
         if (tokenActual.getTipo() == TipoToken.LlaveForanea) {
-            analizarFk(tablaActual);
+            analizarFk(tablaActual, sql);
         } else {
             SimboloColumna col = analizarColumnaDef(sql);
             tablaActual.agregarColumna(col);
@@ -520,7 +604,7 @@ public class Sintactico {
             }
 
             if (tokenActual.getTipo() == TipoToken.LlaveForanea) {
-                analizarFk(tablaActual);
+                analizarFk(tablaActual, sql);
             } else {
                 SimboloColumna col = analizarColumnaDef(sql);
                 if(tablaActual.existeColumna(col.getNombre())){
@@ -541,7 +625,7 @@ public class Sintactico {
         TipoToken tipoDato = analizarTipoDato(sql);
         SimboloColumna nuevaColumna = new SimboloColumna(nombreColumna, tipoDato);
         
-        analizarRestricciones();
+        analizarRestricciones(nuevaColumna, sql);
         
         return nuevaColumna;
     }
@@ -575,7 +659,7 @@ public class Sintactico {
         return tipoEncontrado;
     }
 
-    private void analizarRestricciones() {
+    private void analizarRestricciones(SimboloColumna columna, StringBuilder sql) {
         while (tokenActual != null
                 && (tokenActual.getTipo() == TipoToken.NoNulo
                 || tokenActual.getTipo() == TipoToken.Nulo
@@ -583,53 +667,68 @@ public class Sintactico {
                 || tokenActual.getTipo() == TipoToken.LlavePrimaria
                 || tokenActual.getTipo() == TipoToken.AutoIncremento
                 || tokenActual.getTipo() == TipoToken.Defecto)) {
-            analizarRestriccion();
+            analizarRestriccion(columna, sql);
         }
     }
 
-    private void analizarRestriccion() {
+    private void analizarRestriccion(SimboloColumna columna, StringBuilder sql) {
         if (tokenActual == null) {
             throw new RuntimeException("Error: se esperaba una restricción pero se encontró fin de código");
         }
 
         if (tokenActual.getTipo() == TipoToken.NoNulo) {
+            columna.setEsNoNulo(true);
+            sql.append(" NOT NULL");
             emparejar(TipoToken.NoNulo);
         } else if (tokenActual.getTipo() == TipoToken.Nulo) {
+            sql.append(" NULL");
             emparejar(TipoToken.Nulo);
         } else if (tokenActual.getTipo() == TipoToken.Unico) {
+            columna.setEsUnico(true);
+            sql.append(" UNIQUE");
             emparejar(TipoToken.Unico);
         } else if (tokenActual.getTipo() == TipoToken.LlavePrimaria) {
+            columna.setEsLlavePrimaria(true);
+            sql.append(" PRIMARY KEY");
             emparejar(TipoToken.LlavePrimaria);
         } else if (tokenActual.getTipo() == TipoToken.AutoIncremento) {
+            columna.setEsAutoIncremento(true);
+            sql.append(" GENERATED BY DEFAULT AS IDENTITY");
             emparejar(TipoToken.AutoIncremento);
         } else if (tokenActual.getTipo() == TipoToken.Defecto) {
+            sql.append(" DEFAULT ");
             emparejar(TipoToken.Defecto);
-            //Falta el paso 4
-            //analizarValor();
+            analizarValor(columna, sql);
         } else {
             throw new RuntimeException("Error sintáctico: restricción no válida: " + tokenActual.getLexema());
         }
     }
 
-    private void analizarFk(SimboloTabla tablaActual) {
+    private void analizarFk(SimboloTabla tablaActual, StringBuilder sql) {
+        sql.append("FOREIGN KEY (");
         emparejar(TipoToken.LlaveForanea);
         emparejar(TipoToken.ParentesisAbre);
         
         String columnaLocal = tokenActual.getLexema();
+        sql.append(columnaLocal);
         
         emparejar(TipoToken.Identificador);
         emparejar(TipoToken.ParentesisCierra);
+        sql.append(") REFERENCES ");
         emparejar(TipoToken.Referencia);
         
         String tablaRef = tokenActual.getLexema();
+        sql.append(tablaRef).append("(");
         
         emparejar(TipoToken.Identificador);
         emparejar(TipoToken.ParentesisAbre);
         
         String columnaRef = tokenActual.getLexema();
+        sql.append(columnaRef);
         
         emparejar(TipoToken.Identificador);
         emparejar(TipoToken.ParentesisCierra);
+        sql.append(")");
         
         if(!tablaActual.existeColumna(columnaLocal)){
             throw new RuntimeException("Error semantico: La columna local " + columnaLocal + " no ha sido definida en la tabla " + tablaActual.getNombre());
@@ -653,68 +752,86 @@ public class Sintactico {
         
     }
 
-    private void analizarOpcWhere(SimboloTabla tabla) {
-        emparejar(TipoToken.Donde);
-        analizarExpresionLogica(tabla);
+    private void analizarOpcWhere(SimboloTabla tabla, StringBuilder sql) {
+        List<SimboloTabla> tablas = new ArrayList<>();
+        tablas.add(tabla);
+        analizarOpcWhere(tablas, sql);
     }
 
-    private void analizarExpresionLogica(SimboloTabla tabla) {
-        analizarCondicion(tabla);
+    private void analizarOpcWhere(List<SimboloTabla> tablas, StringBuilder sql) {
+        if (tokenActual != null && tokenActual.getTipo() == TipoToken.Donde) {
+            sql.append(" WHERE ");
+            emparejar(TipoToken.Donde);
+            analizarExpresionLogica(tablas, sql);
+        }
+    }
+
+    private void analizarExpresionLogica(List<SimboloTabla> tablas, StringBuilder sql) {
+        analizarCondicion(tablas, sql);
 
         while (tokenActual != null
                 && (tokenActual.getTipo() == TipoToken.Y
                 || tokenActual.getTipo() == TipoToken.O
                 || tokenActual.getTipo() == TipoToken.AND
                 || tokenActual.getTipo() == TipoToken.OR)) {
-            analizarOperadorLogico();
-            analizarCondicion(tabla);
+            analizarOperadorLogico(sql);
+            analizarCondicion(tablas, sql);
         }
     }
 
-    private void analizarOperadorLogico() {
+    private void analizarOperadorLogico(StringBuilder sql) {
         if (tokenActual == null) {
             throw new RuntimeException("Error: se esperaba operador lógico pero se encontró fin de código");
         }
 
         if (tokenActual.getTipo() == TipoToken.Y) {
+            sql.append(" AND ");
             emparejar(TipoToken.Y);
         } else if (tokenActual.getTipo() == TipoToken.O) {
+            sql.append(" OR ");
             emparejar(TipoToken.O);
         } else if (tokenActual.getTipo() == TipoToken.AND) {
+            sql.append(" AND ");
             emparejar(TipoToken.AND);
         } else if (tokenActual.getTipo() == TipoToken.OR) {
+            sql.append(" OR ");
             emparejar(TipoToken.OR);
         } else {
             throw new RuntimeException("Error sintáctico: se esperaba operador lógico y/o pero se encontró " + tokenActual.getLexema());
         }
     }
 
-    private void analizarCondicion(SimboloTabla tabla) {
+    private void analizarCondicion(List<SimboloTabla> tablas, StringBuilder sql) {
         String nombreColumna = tokenActual.getLexema();
         
-        if(!tabla.existeColumna(nombreColumna)){
-            throw new RuntimeException("Error semántico: La columna " + nombreColumna + "no existe en la tabla " + tabla.getNombre());
+        sql.append(nombreColumna + " ");
+        
+        SimboloColumna columnaCondicion = resolverColumna(tablas, nombreColumna);
+        if(columnaCondicion == null){
+            throw new RuntimeException("Error semántico: La columna " + nombreColumna + " no existe en las tablas de la consulta");
         }
-        
-        SimboloColumna columnaCondicion = tabla.obtenerColumna(nombreColumna);
-        
+
         emparejar(TipoToken.Identificador);
 
         if (tokenActual != null && tokenActual.getTipo() == TipoToken.Entre) {
+            sql.append("BETWEEN ");
             emparejar(TipoToken.Entre);
-            analizarValor(columnaCondicion);
+            analizarValor(columnaCondicion, sql);
+            sql.append(" AND ");
             emparejar(TipoToken.Y);
-            analizarValor(columnaCondicion);
+            analizarValor(columnaCondicion, sql);
         } else {
-            analizarOpRel();
-            analizarValor(columnaCondicion);
+            analizarOpRel(sql);
+            analizarValor(columnaCondicion, sql);
         }
     }
 
-    private void analizarOpRel() {
+    private void analizarOpRel(StringBuilder sql) {
         if (tokenActual == null) {
             throw new RuntimeException("Error: Se esperaba un operador relacional pero se encontro fin de codigo");
         }
+        
+        sql.append("").append(tokenActual.getLexema()).append(" ");
 
         if (tokenActual.getTipo() == TipoToken.Igual) {
             emparejar(TipoToken.Igual);
@@ -733,78 +850,208 @@ public class Sintactico {
         }
     }
 
-    private void analizarGroupBy() {
+    private void analizarGroupBy(StringBuilder sql, List<SimboloTabla> tablas) {
 
         if (tokenActual != null && tokenActual.getTipo() == TipoToken.Grupo) {
+            sql.append(" GROUP BY ");
             emparejar(TipoToken.Grupo);
             emparejar(TipoToken.Por);
 
-            analizarListaId();
-            analizarHaving();
+            analizarListaId(sql, tablas);
+            analizarHaving(sql, tablas);
         }
 
     }
 
-    private void analizarHaving() {
+    private void analizarHaving(StringBuilder sql, List<SimboloTabla> tablas) {
 
         if (tokenActual != null && tokenActual.getTipo() == TipoToken.Tener) {
+            sql.append(" HAVING ");
             emparejar(TipoToken.Tener);
-            analizarExpresionLogica(null);
+            analizarExpresionHaving(tablas, sql);
         }
 
     }
 
-    private void analizarOrderBy() {
+    private void analizarOrderBy(StringBuilder sql, List<SimboloTabla> tablas) {
 
         if (tokenActual != null && tokenActual.getTipo() == TipoToken.Ordernar) {
+            sql.append(" ORDER BY ");
             emparejar(TipoToken.Ordernar);
             emparejar(TipoToken.Por);
 
-            analizarListaOrden();
+            analizarListaOrden(sql, tablas);
 
         }
     }
 
-    private void analizarListaOrden() {
+    private void analizarListaOrden(StringBuilder sql, List<SimboloTabla> tablas) {
 
+        validarIdentificadorEnConsulta(tablas, tokenActual.getLexema());
+        sql.append(tokenActual.getLexema());
         emparejar(TipoToken.Identificador);
 
-        analizarSentido();
+        analizarSentido(sql);
 
         while (tokenActual != null && tokenActual.getTipo() == TipoToken.Coma) {
+            sql.append(", ");
             emparejar(TipoToken.Coma);
+            validarIdentificadorEnConsulta(tablas, tokenActual.getLexema());
+            sql.append(tokenActual.getLexema());
             emparejar(TipoToken.Identificador);
-            analizarSentido();
+            analizarSentido(sql);
         }
 
     }
 
-    private void analizarSentido() {
+    private void analizarSentido(StringBuilder sql) {
 
         if (tokenActual != null && tokenActual.getTipo() == TipoToken.Asc) {
+            sql.append(" ASC");
             emparejar(TipoToken.Asc);
         } else if (tokenActual != null && tokenActual.getTipo() == TipoToken.Desc) {
+            sql.append(" DESC");
             emparejar(TipoToken.Desc);
         }
 
     }
 
-    private void analizarLimit() {
+    private void analizarLimit(StringBuilder sql) {
 
         if (tokenActual != null && tokenActual.getTipo() == TipoToken.Limite) {
             emparejar(TipoToken.Limite);
-
+            sql.append(" LIMIT ").append(tokenActual.getLexema());
             emparejar(TipoToken.NumeroEntero);
         }
     }
 
-    private void analizarListaId() {
+    private void analizarListaId(StringBuilder sql, List<SimboloTabla> tablas) {
 
+        validarIdentificadorEnConsulta(tablas, tokenActual.getLexema());
+        sql.append(tokenActual.getLexema());
         emparejar(TipoToken.Identificador);
 
         while (tokenActual != null && tokenActual.getTipo() == TipoToken.Coma) {
+            sql.append(", ");
             emparejar(TipoToken.Coma);
+            validarIdentificadorEnConsulta(tablas, tokenActual.getLexema());
+            sql.append(tokenActual.getLexema());
             emparejar(TipoToken.Identificador);
         }
+    }
+
+    private void analizarExpresionLogicaJoin(List<SimboloTabla> tablas, StringBuilder sql) {
+        analizarCondicionJoin(tablas, sql);
+
+        while (tokenActual != null
+                && (tokenActual.getTipo() == TipoToken.Y
+                || tokenActual.getTipo() == TipoToken.O
+                || tokenActual.getTipo() == TipoToken.AND
+                || tokenActual.getTipo() == TipoToken.OR)) {
+            analizarOperadorLogico(sql);
+            analizarCondicionJoin(tablas, sql);
+        }
+    }
+
+    private void analizarCondicionJoin(List<SimboloTabla> tablas, StringBuilder sql) {
+        String columnaIzquierda = tokenActual.getLexema();
+        validarIdentificadorEnConsulta(tablas, columnaIzquierda);
+        sql.append(columnaIzquierda).append(" ");
+        emparejar(TipoToken.Identificador);
+
+        analizarOpRel(sql);
+
+        String columnaDerecha = tokenActual.getLexema();
+        validarIdentificadorEnConsulta(tablas, columnaDerecha);
+        sql.append(columnaDerecha);
+        emparejar(TipoToken.Identificador);
+    }
+
+    private void analizarExpresionHaving(List<SimboloTabla> tablas, StringBuilder sql) {
+        analizarCondicionHaving(tablas, sql);
+
+        while (tokenActual != null
+                && (tokenActual.getTipo() == TipoToken.Y
+                || tokenActual.getTipo() == TipoToken.O
+                || tokenActual.getTipo() == TipoToken.AND
+                || tokenActual.getTipo() == TipoToken.OR)) {
+            analizarOperadorLogico(sql);
+            analizarCondicionHaving(tablas, sql);
+        }
+    }
+
+    private void analizarCondicionHaving(List<SimboloTabla> tablas, StringBuilder sql) {
+        SimboloColumna columnaComparacion;
+        TipoToken tipoComparacion;
+
+        if (tokenActual.getTipo() == TipoToken.Identificador) {
+            String nombreColumna = tokenActual.getLexema();
+            columnaComparacion = resolverColumna(tablas, nombreColumna);
+            if (columnaComparacion == null) {
+                throw new RuntimeException("Error semántico: La columna " + nombreColumna + " no existe en las tablas de la consulta");
+            }
+            tipoComparacion = columnaComparacion.getTipoDato();
+            sql.append(nombreColumna).append(" ");
+            emparejar(TipoToken.Identificador);
+        } else if (tokenActual.getTipo() == TipoToken.Contar
+                || tokenActual.getTipo() == TipoToken.Suma
+                || tokenActual.getTipo() == TipoToken.Promedio
+                || tokenActual.getTipo() == TipoToken.Maximo
+                || tokenActual.getTipo() == TipoToken.Minimo) {
+            TipoToken agregacion = tokenActual.getTipo();
+            analizarAgregacion(sql);
+            sql.append("(");
+            emparejar(TipoToken.ParentesisAbre);
+
+            String nombreColumna = tokenActual.getLexema();
+            columnaComparacion = resolverColumna(tablas, nombreColumna);
+            if (columnaComparacion == null) {
+                throw new RuntimeException("Error semántico: La columna " + nombreColumna + " no existe en las tablas de la consulta");
+            }
+
+            if ((agregacion == TipoToken.Suma || agregacion == TipoToken.Promedio)
+                    && columnaComparacion.getTipoDato() != TipoToken.Entero
+                    && columnaComparacion.getTipoDato() != TipoToken.Decimal) {
+                throw new RuntimeException("Error semántico: No se puede aplicar la función " + agregacion + " a la columna " + nombreColumna);
+            }
+
+            if (agregacion == TipoToken.Contar) {
+                tipoComparacion = TipoToken.Entero;
+            } else if (agregacion == TipoToken.Promedio) {
+                tipoComparacion = TipoToken.Decimal;
+            } else {
+                tipoComparacion = columnaComparacion.getTipoDato();
+            }
+
+            sql.append(nombreColumna).append(") ");
+            emparejar(TipoToken.Identificador);
+            emparejar(TipoToken.ParentesisCierra);
+        } else {
+            throw new RuntimeException("Error sintáctico: condición HAVING inválida en " + tokenActual.getLexema());
+        }
+
+        analizarOpRel(sql);
+        analizarValor(new SimboloColumna("having", tipoComparacion), sql);
+    }
+
+    private void validarIdentificadorEnConsulta(List<SimboloTabla> tablas, String nombreColumna) {
+        if (resolverColumna(tablas, nombreColumna) == null) {
+            throw new RuntimeException("Error semántico: La columna " + nombreColumna + " no existe en las tablas de la consulta");
+        }
+    }
+
+    private SimboloColumna resolverColumna(List<SimboloTabla> tablas, String nombreColumna) {
+        SimboloColumna columnaEncontrada = null;
+
+        for (SimboloTabla tabla : tablas) {
+            if (tabla.existeColumna(nombreColumna)) {
+                if (columnaEncontrada != null) {
+                    throw new RuntimeException("Error semántico: La columna " + nombreColumna + " es ambigua en la consulta");
+                }
+                columnaEncontrada = tabla.obtenerColumna(nombreColumna);
+            }
+        }
+
+        return columnaEncontrada;
     }
 }

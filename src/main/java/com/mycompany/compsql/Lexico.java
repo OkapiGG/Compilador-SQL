@@ -15,16 +15,16 @@ import java.util.Map;
  */
 public class Lexico {
 
-    int i = 0;
+    private int indiceActual = 0;
 
     private final Map<String, TipoToken> mapaToken;
 
     public Lexico() {
         this.mapaToken = new HashMap<>();
-        mapeoToken();
+        inicializarMapaTokens();
     }
 
-    public void mapeoToken() {
+    private void inicializarMapaTokens() {
         //Consultas
         mapaToken.put("seleccionar", TipoToken.Seleccionar);
         mapaToken.put("de", TipoToken.De);
@@ -124,8 +124,8 @@ public class Lexico {
     public List<Token> analizar(String codigo) {
         List<Token> listaTokens = new ArrayList<>();
         
-        for (i = 0; i < codigo.length(); i++) {
-            char actual = codigo.charAt(i);
+        for (indiceActual = 0; indiceActual < codigo.length(); indiceActual++) {
+            char actual = codigo.charAt(indiceActual);
 
             if (Character.isWhitespace(actual)) {
                 continue;
@@ -141,7 +141,7 @@ public class Lexico {
                 continue;
             }   
             
-            if (Character.isDigit(actual) || (actual == '-' && i + 1 < codigo.length() && Character.isDigit(codigo.charAt(i + 1)))) {
+            if (Character.isDigit(actual) || (actual == '-' && indiceActual + 1 < codigo.length() && Character.isDigit(codigo.charAt(indiceActual + 1)))) {
                 listaTokens.add(obtenerNumero(codigo, actual));
                 continue;
             }
@@ -149,6 +149,15 @@ public class Lexico {
             if (actual == '"' || actual == '“' || actual == '”') {
                 listaTokens.add(obtenerCadena(codigo, actual));
                 continue;
+            }
+            
+            if ((actual == '>' || actual == '<' || actual == '!') && indiceActual + 1 < codigo.length()) {
+                String operadorDoble = codigo.substring(indiceActual, indiceActual + 2);
+                if (mapaToken.containsKey(operadorDoble)) {
+                    listaTokens.add(new Token(mapaToken.get(operadorDoble), operadorDoble));
+                    indiceActual++;
+                    continue;
+                }
             }
             
             String simbolo = String.valueOf(actual);
@@ -161,65 +170,65 @@ public class Lexico {
         return listaTokens;
     }
 
-    public String obtenerIdentificador(String codigo) {
-    String resultado = "";
-    while (i < codigo.length() && 
-          (Character.isLetter(codigo.charAt(i)) || 
-           Character.isDigit(codigo.charAt(i)) || 
-           codigo.charAt(i) == '_')) { 
-        resultado += codigo.charAt(i);
-        i++;
+    private String obtenerIdentificador(String codigo) {
+        StringBuilder resultado = new StringBuilder();
+        while (indiceActual < codigo.length()
+                && (Character.isLetter(codigo.charAt(indiceActual))
+                || Character.isDigit(codigo.charAt(indiceActual))
+                || codigo.charAt(indiceActual) == '_')) {
+            resultado.append(codigo.charAt(indiceActual));
+            indiceActual++;
+        }
+        indiceActual--;
+        return resultado.toString();
     }
-    i--;
-    return resultado;
-}
     
-    public Token obtenerNumero(String codigo, char actual) {
-        String resultado = "";
+    private Token obtenerNumero(String codigo, char actual) {
+        StringBuilder resultado = new StringBuilder();
         boolean esDecimal = false;
 
         if (actual == '-') {
-            resultado += actual;
-            i++;
+            resultado.append(actual);
+            indiceActual++;
         }
 
-        while (i < codigo.length() && Character.isDigit(codigo.charAt(i))) {
-            resultado += codigo.charAt(i);
-            i++;
+        while (indiceActual < codigo.length() && Character.isDigit(codigo.charAt(indiceActual))) {
+            resultado.append(codigo.charAt(indiceActual));
+            indiceActual++;
         }
 
-        if (i < codigo.length() && codigo.charAt(i) == '.') {
+        if (indiceActual < codigo.length() && codigo.charAt(indiceActual) == '.') {
             esDecimal = true;
-            resultado += '.';
-            i++;
+            resultado.append('.');
+            indiceActual++;
             
-            while (i < codigo.length() && Character.isDigit(codigo.charAt(i))) {
-                resultado += codigo.charAt(i);
-                i++;
+            while (indiceActual < codigo.length() && Character.isDigit(codigo.charAt(indiceActual))) {
+                resultado.append(codigo.charAt(indiceActual));
+                indiceActual++;
             }
         }
-        i--;
+        indiceActual--;
 
         if (esDecimal) {
-            return new Token(TipoToken.NumeroDecimal, resultado);
+            return new Token(TipoToken.NumeroDecimal, resultado.toString());
         } else {
-            return new Token(TipoToken.NumeroEntero, resultado);
+            return new Token(TipoToken.NumeroEntero, resultado.toString());
         }
     }
     
-    public Token obtenerCadena(String codigo, char actual){
+    private Token obtenerCadena(String codigo, char actual){
         StringBuilder lexema = new StringBuilder();
-        i++;
+        indiceActual++;
         
-        while(i < codigo.length()){
-            char c = codigo.charAt(i);
+        while(indiceActual < codigo.length()){
+            char c = codigo.charAt(indiceActual);
             
             if(c=='"'||c=='”'||c =='“'){
                 break;
             }
             
             lexema.append(c);
-            i++;
+            indiceActual++;
         }
      
         return new Token(TipoToken.Cadena, lexema.toString());

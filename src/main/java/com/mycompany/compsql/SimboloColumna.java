@@ -10,8 +10,8 @@ package com.mycompany.compsql;
  */
 public class SimboloColumna {
     
-    private String nombre;
-    private TipoToken tipoDato;
+    private final String nombre;
+    private final TipoToken tipoDato;
     
     private boolean esLlavePrimaria;
     private boolean esNoNulo;

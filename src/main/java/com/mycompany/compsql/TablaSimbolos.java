@@ -13,21 +13,24 @@ import java.util.Map;
  */
 public class TablaSimbolos {
     
-    private static Map<String, SimboloTabla> tablas = new HashMap<>();
+    private static final Map<String, SimboloTabla> TABLAS = new HashMap<>();
+    
+    private TablaSimbolos() {
+    }
     
     public static void registrarTabla(SimboloTabla tabla){
-        tablas.put(tabla.getNombre().toLowerCase(), tabla);
+        TABLAS.put(tabla.getNombre().toLowerCase(), tabla);
     }
  
     public static boolean existeTabla(String nombreTabla){
-        return tablas.containsKey(nombreTabla.toLowerCase());
+        return TABLAS.containsKey(nombreTabla.toLowerCase());
     }
     
     public static SimboloTabla obtenerTabla(String nombreTabla){
-        return tablas.get(nombreTabla.toLowerCase());
+        return TABLAS.get(nombreTabla.toLowerCase());
     }
     
     public static void limpiar(){
-        tablas.clear();
+        TABLAS.clear();
     }
 }

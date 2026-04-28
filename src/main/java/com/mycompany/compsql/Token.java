@@ -10,8 +10,8 @@ package com.mycompany.compsql;
  */
 public class Token {
     
-    private TipoToken tipo;
-    private String lexema;
+    private final TipoToken tipo;
+    private final String lexema;
 
     public Token(TipoToken tipo, String lexema) {
         this.tipo = tipo;
